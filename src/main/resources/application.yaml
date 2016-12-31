@@ -1,0 +1,17 @@
+zuul:
+  ignored-services: "*"
+  routes:
+    hydra_realm1:
+      path: /hydra/realm1/**
+      url: http://localhost:4444
+    balances:
+      path: /balances/**
+      url: http://localhost:10000/balances
+    accounts:
+      path: /accounts/**
+      url: http://localhost:10000/accounts
+ribbon:
+  eureka:
+    enabled: false
+server:
+  port: 8080
