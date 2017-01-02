@@ -1,0 +1,1 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.dbg.cloud.acheron.config.store.routing.cassandra.CassandraRouteStoreConfiguration

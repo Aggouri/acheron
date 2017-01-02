@@ -1,20 +1,39 @@
 zuul:
   ignored-services: "*"
-  routes:
-    hydra_realm1:
-      path: /hydra/realm1/**
-      url: http://localhost:4444
-      # Spring Boot strips some sensitive headers by default (Authorization is one of them)
-      # Disable the blacklist
-      sensitiveHeaders:
-    balances:
-      path: /balances/**
-      url: http://localhost:10000/balances
-    accounts:
-      path: /accounts/**
-      url: http://localhost:10000/accounts
+#  routes:
+#    hydra_realm1:
+#      path: /hydra/realm1/**
+#      url: http://localhost:4444
+#      # Spring Boot strips some sensitive headers by default (Authorization is one of them)
+#      # Disable the blacklist
+#      sensitiveHeaders:
+#    balances:
+#      path: /balances/**
+#      url: http://localhost:10000/balances
+#    accounts:
+#      path: /accounts/**
+#      url: http://localhost:10000/accounts
 ribbon:
   eureka:
     enabled: false
+
 server:
   port: 8080
+
+# Route configuration comes from Cassandra
+# See CassandraRouteStore.java for setup instructions.
+store:
+  cassandra:
+    enabled: true
+    routing: true
+
+# Cassandra configuration
+# Can also be passed as environment variables:
+#   CASSANDRA_CONTACT_POINTS[0]=127.0.0.1
+#   CASSANDRA_CONTACT_POINTS[1]=localhost
+#   CASSANDRA_PORT=9042
+cassandra:
+  contactPoints:
+    - 127.0.0.1
+    - localhost
+  port: 9042
