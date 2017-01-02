@@ -24,8 +24,8 @@ import java.util.Optional;
 @Slf4j
 public final class OAuth2Filter extends PreFilter {
 
-    // Too easy :-)
     // FIXME Get CLIENT_ID and CLIENT_SECRET from elsewhere
+    // hydra clients create -n "acheron" -g client_credentials -r token
     private static final String CLIENT_ID = "7f15f8b8-98d5-4d25-bb1b-d45614766e03";
     private static final String CLIENT_SECRET = "YCWwEAqnogn(O0uBFrqh$_9hsR";
 
