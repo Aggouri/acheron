@@ -94,7 +94,7 @@ INSERT INTO acheron_routes (id, path, service_id, url, override_sensitive_header
 ```
 
 ## Hydra Configuration
-You need to an OAuth2 client to allow Acheron to make requests to Hydra.
+You need to create an OAuth2 client to allow Acheron to make requests to Hydra.
 
 Connect to hydra:
 ```
