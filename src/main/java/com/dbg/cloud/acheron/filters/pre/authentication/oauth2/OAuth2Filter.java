@@ -24,19 +24,18 @@ import java.util.Optional;
 @Slf4j
 public final class OAuth2Filter extends PreFilter {
 
-    // FIXME Get CLIENT_ID and CLIENT_SECRET from elsewhere
-    // hydra clients create -n "acheron" -g client_credentials -r token
-    private static final String CLIENT_ID = "7f15f8b8-98d5-4d25-bb1b-d45614766e03";
-    private static final String CLIENT_SECRET = "YCWwEAqnogn(O0uBFrqh$_9hsR";
-
     private final RouteLocator routeLocator;
+    private final String clientId;
+    private final String clientSecret;
 
     @Autowired
     private RestTemplateBuilder restTemplateBuilder;
 
 
-    public OAuth2Filter(final RouteLocator routeLocator) {
+    public OAuth2Filter(final RouteLocator routeLocator, String clientId, String clientSecret) {
         this.routeLocator = routeLocator;
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
     }
 
     @Override
@@ -113,9 +112,9 @@ public final class OAuth2Filter extends PreFilter {
         final AccessToken token = new AccessToken.BearerToken(context.getRequest());
 
         final String realm_id = (String) context.get(AcheronRequestContextKeys.REALM_ID);
-        final String hydraRootURL = getHydraRootURL(realm_id);
+        final String hydraRootURL = getAuthServerRootURL(realm_id);
 
-        final CredentialsStruct credentials = new CredentialsStruct(CLIENT_ID, CLIENT_SECRET, currentBearerToken);
+        final CredentialsStruct credentials = new CredentialsStruct(clientId, clientSecret, currentBearerToken);
         final OAuth2AuthorisationServer authServer = new Hydra(hydraRootURL, credentials, restTemplateBuilder);
 
         AuthenticationResult authResult = authServer.authenticationSpec().operation().result();
@@ -132,7 +131,7 @@ public final class OAuth2Filter extends PreFilter {
         throwFailure(403, "{ \"error\": \"Invalid access token\" }");
     }
 
-    private String getHydraRootURL(final String realm_id) {
+    private String getAuthServerRootURL(final String realm_id) {
         String hydraRootURL = null;
         final String hydraRouteId = "hydra_" + realm_id;
 

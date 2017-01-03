@@ -29,11 +29,17 @@ An admin API is planned in the immediate future. Currently, you have to execute 
 ## OAuth2
 The OAuth2 plugin uses Hydra, a lightweight, scalable and cloud native OAuth2 authorisation server (from ORY).
 
-# Installation
+# Installation / Running
 This is a very crude set of commands that kinda gives an idea of what is required to run the whole thing. This section will be updated later, when the project has progressed.
 
 ## Acheron
-Clone the repo and use your IDE or run ```./mvnw spring-boot:run```.
+To run Acheron, please clone the repo and either use your IDE or run ```./mvnw spring-boot:run```.
+
+You need to export the following enviornment variables, the values of which you get from Hydra. See the configuration section below.
+```
+OAUTH2_CLIENT_ID=7f15f8b8-98d5-4d25-bb1b-d45614766e03
+OAUTH2_CLIENT_SECRET=YCWwEAqnogn(O0uBFrqh$_9hsR
+```
 
 ## Hydra
 First time:
@@ -69,8 +75,6 @@ CREATE KEYSPACE IF NOT EXISTS acheron WITH REPLICATION = { 'class' : 'SimpleStra
 
 USE acheron;
 
-DROP TABLE acheron_routes;
-
 CREATE TABLE acheron_routes (
     id text,
     path text,
@@ -84,12 +88,49 @@ CREATE TABLE acheron_routes (
 );
 ```
 
-Insert the routes:
+Insert the Hydra route:
 ```
 INSERT INTO acheron_routes (id, path, service_id, url, override_sensitive_headers, sensitive_headers) VALUES ('hydra_realm1', '/hydra/realm1/**', 'hydra_realm1', 'http://localhost:4444', true, {});
-INSERT INTO acheron_routes (id, path, service_id, url, override_sensitive_headers) VALUES ('balances', '/balances/**', 'balances', 'http://localhost:10000/balances', false); 
-INSERT INTO acheron_routes (id, path, service_id, url, override_sensitive_headers) VALUES ('accounts', '/accounts/**', 'accounts', 'http://localhost:10000/accounts', false);
 ```
+
+## Hydra Configuration
+You need to an OAuth2 client to allow Acheron to make requests to Hydra.
+
+Connect to hydra:
+```
+$ docker exec -i -t hydra_hydra_1 /bin/bash
+```
+
+Create the Acheron client:
+```
+$ hydra clients create -n "acheron" \
+-g client_credentials \
+-r token
+
+Client ID: 7f15f8b8-98d5-4d25-bb1b-d45614766e03
+Client Secret: YCWwEAqnogn(O0uBFrqh$_9hsR
+```
+The client ID and client secret need to be exported as environment variables prior to running Acheron. See the instructions for running Acheron.
 
 ## Plugin Configuration
 Hardcoded. Currently working on it.
+
+# Play
+This section has a set of requests one can execute to play with Acheron. It assumes you have an API running at ```http://localhost:10000/accounts``` and Acheron is configured to proxy requests through it.
+
+## Set up the API route
+```
+INSERT INTO acheron_routes (id, path, service_id, url, override_sensitive_headers) VALUES ('accounts', '/accounts/**', 'accounts', 'http://localhost:10000/accounts', false);
+```
+
+## Create an OAuth2 client
+To make calls to an OAuth2-protected API, you need to create an OAuth2 client.
+
+```
+$ docker exec -i -t hydra_hydra_1 /bin/bash
+$ hydra clients create -n "dbp-client" \
+-a hydra.keys.get,accounts,balances \
+-c https://www.getpostman.com/oauth2/callback \
+-g authorization_code,client_credentials \
+-r token,code
+```
