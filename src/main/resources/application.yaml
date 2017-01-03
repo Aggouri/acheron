@@ -1,12 +1,13 @@
 zuul:
   ignored-services: "*"
-#  routes:
-#    hydra_realm1:
-#      path: /hydra/realm1/**
-#      url: http://localhost:4444
+  routes:
+    # Can be overwritten by Cassandra config
+    hydra_realm1:
+      path: /hydra/realm1/**
+      url: http://localhost:4444
 #      # Spring Boot strips some sensitive headers by default (Authorization is one of them)
 #      # Disable the blacklist
-#      sensitiveHeaders:
+      sensitiveHeaders:
 #    balances:
 #      path: /balances/**
 #      url: http://localhost:10000/balances
