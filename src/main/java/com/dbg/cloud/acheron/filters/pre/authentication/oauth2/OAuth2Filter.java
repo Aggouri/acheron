@@ -67,6 +67,8 @@ public final class OAuth2Filter extends PreFilter {
                 throwInvalidAccessToken();
             }
 
+            // FIXME Should we not check the aud claim?
+
             // Is it issued for the required scopes?
             if (tokenInfo.scope() == null || "".equals(tokenInfo.scope().trim())) {
                 log.info("Scope is null or empty");
