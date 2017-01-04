@@ -39,7 +39,7 @@ public final class APIKeyFilter extends PreFilter {
 
     @Override
     public boolean shouldFilter() {
-        return isEnabled("api_key.config.enabled");
+        return isEnabled("plugins.api_key.enabled");
     }
 
     private Optional<String> resolveConsumerId(final String apiKey) {

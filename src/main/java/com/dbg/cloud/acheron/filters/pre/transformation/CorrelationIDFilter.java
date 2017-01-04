@@ -17,7 +17,7 @@ public final class CorrelationIDFilter extends PreFilter {
     @Override
     public Object run() {
         final RequestContext context = RequestContext.getCurrentContext();
-        final String customHeaderName = (String) context.get("correlation_id.config.custom_header_name");
+        final String customHeaderName = (String) context.get("plugins.correlation_id.config.custom_header_name");
 
         final String correlationIDHeaderName = customHeaderName != null ?
                 customHeaderName : AcheronHeaders.CORRELATION_ID;
@@ -33,6 +33,6 @@ public final class CorrelationIDFilter extends PreFilter {
 
     @Override
     public boolean shouldFilter() {
-        return isEnabled("correlation_id.config.enabled");
+        return isEnabled("plugins.correlation_id.enabled");
     }
 }

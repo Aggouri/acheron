@@ -45,7 +45,7 @@ public final class OAuth2Filter extends PreFilter {
 
     @Override
     public boolean shouldFilter() {
-        return isEnabled("oauth2.config.enabled");
+        return isEnabled("plugins.oauth2.enabled");
     }
 
     @Override

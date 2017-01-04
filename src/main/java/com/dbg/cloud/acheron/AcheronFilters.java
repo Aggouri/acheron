@@ -1,6 +1,7 @@
 package com.dbg.cloud.acheron;
 
 import com.dbg.cloud.acheron.config.oauth2.OAuth2Properties;
+import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
 import com.dbg.cloud.acheron.filters.pre.authentication.APIKeyFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.OAuth2Filter;
 import com.dbg.cloud.acheron.filters.pre.authorization.ACLFilter;
@@ -40,8 +41,8 @@ public class AcheronFilters {
     }
 
     @Bean
-    public APIConfigFilter apiConfigFilter() {
-        return new APIConfigFilter();
+    public APIConfigFilter apiConfigFilter(PluginConfigStore pluginConfigStore) {
+        return new APIConfigFilter(pluginConfigStore);
     }
 
     @Bean

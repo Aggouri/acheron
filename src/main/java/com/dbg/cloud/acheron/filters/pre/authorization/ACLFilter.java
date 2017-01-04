@@ -39,7 +39,7 @@ public class ACLFilter extends PreFilter {
 
     @Override
     public boolean shouldFilter() {
-        return isEnabled("acl.config.enabled");
+        return isEnabled("plugins.acl.enabled");
     }
 
     protected boolean isConsumerInRequiredRole(final String consumerId, final String routeId) {
