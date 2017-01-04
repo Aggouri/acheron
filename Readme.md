@@ -7,6 +7,8 @@ Acheron is a configurable API gateway and management server in front of APIs, of
 
 The project is heavily inspired by Kong, Apigee, Mashery and similar platforms.
 
+![Acheron high level image](docs/readme/images/acheron.png)
+
 # Architecture
 
 ## Core
