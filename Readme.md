@@ -3,7 +3,7 @@ In Dante's Inferno, the Acheron river forms the border of Hell. Following Greek 
 > Warning: This project is a work in progress.
 
 # Introduction
-Acheron is a configurable API gateway and management server in front of APIs, offering pluggable authentication, authorisation and request transformation options per API and consumer. Acheron's goal is to be lightweight, scalable and easy to configure. We'll see how that works out :-)
+Acheron is a configurable API gateway and management server, offering pluggable authentication, authorisation and request transformation options per API and consumer. Acheron's goal is to be lightweight, scalable and easy to configure. We'll see how that works out :-)
 
 The project is heavily inspired by Kong, Apigee, Mashery and similar platforms.
 
