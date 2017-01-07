@@ -12,7 +12,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
-public class CassandraPluginConfigStore implements PluginConfigStore {
+public final class CassandraPluginConfigStore implements PluginConfigStore {
 
     private final CassandraOperations cassandraOperations;
 
@@ -21,8 +21,8 @@ public class CassandraPluginConfigStore implements PluginConfigStore {
         final Select select = QueryBuilder.select().from("plugins");
         select.where(QueryBuilder.eq("route_id", routeId));
 
-        List<CassandraPluginConfig> results = cassandraOperations.select(select, CassandraPluginConfig.class);
-        return results.stream().map(CassandraPluginConfigStore::toPluginConfig).collect(Collectors.toList());
+        final List<CassandraPluginConfig> results = cassandraOperations.select(select, CassandraPluginConfig.class);
+        return results.stream().map(cassandraPluginConfig -> cassandraPluginConfig).collect(Collectors.toList());
     }
 
     @Override
@@ -30,11 +30,7 @@ public class CassandraPluginConfigStore implements PluginConfigStore {
         final Select select = QueryBuilder.select().from("plugins");
         select.where(QueryBuilder.eq("consumer_id", consumerId));
 
-        List<CassandraPluginConfig> results = cassandraOperations.select(select, CassandraPluginConfig.class);
-        return results.stream().map(CassandraPluginConfigStore::toPluginConfig).collect(Collectors.toList());
-    }
-
-    private static PluginConfig toPluginConfig(CassandraPluginConfig cassandraPluginConfig) {
-        return cassandraPluginConfig;
+        final List<CassandraPluginConfig> results = cassandraOperations.select(select, CassandraPluginConfig.class);
+        return results.stream().map(cassandraPluginConfig -> cassandraPluginConfig).collect(Collectors.toList());
     }
 }

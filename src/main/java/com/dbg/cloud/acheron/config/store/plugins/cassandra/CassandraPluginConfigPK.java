@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode
-public class CassandraPluginConfigPK implements Serializable {
+public final class CassandraPluginConfigPK implements Serializable {
 
     @PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID id;

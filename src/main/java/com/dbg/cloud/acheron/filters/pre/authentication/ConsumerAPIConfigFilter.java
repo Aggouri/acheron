@@ -6,8 +6,10 @@ import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,12 +33,12 @@ public class ConsumerAPIConfigFilter extends PreFilter {
 
         final String routeId = (String) context.get(AcheronRequestContextKeys.ROUTE_ID);
         final String consumerId = getConsumerId();
+        final String httpMethod = context.getRequest().getMethod();
 
         // Get configuration for consumer (this route-specific or generic)
         List<PluginConfig> routeConfigurations = configStore.findByConsumer(UUID.fromString(consumerId));
         List<PluginConfig> enabledPlugins = routeConfigurations.stream().filter(
-                pluginConfig -> (pluginConfig.isEnabled() &&
-                        (pluginConfig.getRouteId() == null || routeId.equals(pluginConfig.getRouteId()))))
+                pluginConfig -> (shouldPluginConfigBeIncluded(pluginConfig, routeId, httpMethod)))
                 .collect(Collectors.toList());
 
         enabledPlugins.forEach(pluginConfig -> {
@@ -49,5 +51,16 @@ public class ConsumerAPIConfigFilter extends PreFilter {
     @Override
     public boolean shouldFilter() {
         return getConsumerId() != null;
+    }
+
+    private boolean shouldPluginConfigBeIncluded(final PluginConfig pluginConfig, final String routeId,
+                                                 final String httpMethod) {
+        return pluginConfig.isEnabled() &&
+                (pluginConfig.getRouteId() == null || routeId.equals(pluginConfig.getRouteId())) &&
+                methodMatchesMethods(httpMethod, pluginConfig.getHttpMethods());
+    }
+
+    private boolean methodMatchesMethods(final String method, final @NonNull Set<String> methods) {
+        return methods.contains("*") || methods.contains(method);
     }
 }

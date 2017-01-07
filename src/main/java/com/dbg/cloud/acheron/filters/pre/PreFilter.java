@@ -42,9 +42,18 @@ public abstract class PreFilter extends AcheronFilter {
         final String alreadySet = getConsumerId();
         if (alreadySet != null && !alreadySet.equals(consumerId)) {
             log.info("Attempted to set a consumer id that is not the same as the one already set.");
-            throwFailure(400, "{ \"error\": \"Bad request\" }");
+            throwBadRequest();
         } else {
             RequestContext.getCurrentContext().set(AcheronRequestContextKeys.CONSUMER_ID, consumerId);
         }
+    }
+
+    /**
+     * Convenience method to stop request execution and return with a 400 Bad Request.
+     *
+     * @throws RuntimeException at all times
+     */
+    protected void throwBadRequest() throws RuntimeException {
+        throwFailure(400, "{ \"error\": \"Bad request\" }");
     }
 }

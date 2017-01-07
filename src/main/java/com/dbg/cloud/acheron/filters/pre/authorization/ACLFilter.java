@@ -25,7 +25,7 @@ public class ACLFilter extends PreFilter {
         if (consumerId == null || consumerId.trim().isEmpty()) {
             // We need to know who called us --> this is done with authentication filters
             log.info("Probably a configuration error. Consumer id is unknown.");
-            throwFailure(500, "{ \"error\": \"Internal server error\" }");
+            throwInternalServerError();
         }
 
         // API consumer must be in required role

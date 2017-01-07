@@ -34,6 +34,7 @@ public final class RouteResolutionFilter extends PreFilter {
             log.info("Resolved route id: {}", matchingRoute.getId());
         } else {
             log.error("Could not resolve route. Should raise an error!");
+            throwBadRequest();
         }
 
         return null;

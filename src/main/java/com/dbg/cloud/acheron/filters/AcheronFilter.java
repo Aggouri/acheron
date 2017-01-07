@@ -33,6 +33,8 @@ public abstract class AcheronFilter extends ZuulFilter {
         throw new RuntimeException("Code: " + code + ", " + ctx.getResponseBody()); // to break execution
     }
 
+
+
     /**
      * Convenience method for checking that a boolean key is set to Boolean.TRUE in the request context.
      *
@@ -50,5 +52,14 @@ public abstract class AcheronFilter extends ZuulFilter {
      */
     protected String getConsumerId() {
         return (String) RequestContext.getCurrentContext().get(AcheronRequestContextKeys.CONSUMER_ID);
+    }
+
+    /**
+     * Convenience method to stop request execution and return with a 500 Internal Server Error.
+     *
+     * @throws RuntimeException at all times
+     */
+    protected void throwInternalServerError() throws RuntimeException {
+        throwFailure(500, "{ \"error\": \"Internal server error\" }");
     }
 }

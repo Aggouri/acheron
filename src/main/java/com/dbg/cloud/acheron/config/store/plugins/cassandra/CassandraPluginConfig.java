@@ -10,13 +10,14 @@ import org.springframework.data.cassandra.mapping.Table;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Set;
 import java.util.UUID;
 
 @Table(value = "plugins")
 @Getter
 @Setter
 @EqualsAndHashCode
-public class CassandraPluginConfig implements PluginConfig, Serializable {
+public final class CassandraPluginConfig implements PluginConfig, Serializable {
 
     @PrimaryKey
     private CassandraPluginConfigPK pk;
@@ -26,6 +27,9 @@ public class CassandraPluginConfig implements PluginConfig, Serializable {
 
     @Column(value = "consumer_id")
     private UUID consumerId;
+
+    @Column(value = "http_methods")
+    private Set<String> httpMethods;
 
     @Column
     private String config;

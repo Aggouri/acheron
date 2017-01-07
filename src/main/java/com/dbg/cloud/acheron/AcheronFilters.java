@@ -2,14 +2,12 @@ package com.dbg.cloud.acheron;
 
 import com.dbg.cloud.acheron.config.oauth2.OAuth2Properties;
 import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
+import com.dbg.cloud.acheron.config.store.routing.RouteStore;
 import com.dbg.cloud.acheron.filters.pre.authentication.APIKeyFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.ConsumerAPIConfigFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.OAuth2Filter;
 import com.dbg.cloud.acheron.filters.pre.authorization.ACLFilter;
-import com.dbg.cloud.acheron.filters.pre.edge.APIConfigFilter;
-import com.dbg.cloud.acheron.filters.pre.edge.LogPreFilter;
-import com.dbg.cloud.acheron.filters.pre.edge.RouteResolutionFilter;
-import com.dbg.cloud.acheron.filters.pre.edge.SanitizeHeadersFilter;
+import com.dbg.cloud.acheron.filters.pre.edge.*;
 import com.dbg.cloud.acheron.filters.pre.transformation.CorrelationIDFilter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.netflix.zuul.filters.RouteLocator;
@@ -39,6 +37,11 @@ public class AcheronFilters {
     @Bean
     public RouteResolutionFilter routeResolutionFilter(RouteLocator routeLocator) {
         return new RouteResolutionFilter(routeLocator);
+    }
+
+    @Bean
+    public HttpMethodFilter httpMethodFilter(RouteStore routeStore) {
+        return new HttpMethodFilter(routeStore);
     }
 
     @Bean

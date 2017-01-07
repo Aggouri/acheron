@@ -87,6 +87,7 @@ USE acheron;
 
 CREATE TABLE routes (
     id text,
+    http_methods Set<text>,
     path text,
     service_id text,
     url text,
@@ -102,20 +103,22 @@ CREATE TABLE plugins (
     name text,
     route_id text,
     consumer_id uuid,
+    http_methods Set<text>,
     config text,
     enabled boolean,
     created_at timestamp,
     PRIMARY KEY (id, name)
 ) WITH CLUSTERING ORDER BY (name ASC);
 
-CREATE INDEX plugins_api_id_idx ON plugins (route_id);
+CREATE INDEX plugins_route_id_idx ON plugins (route_id);
 CREATE INDEX plugins_consumer_id_idx ON plugins (consumer_id);
 CREATE INDEX plugins_name_idx ON plugins (name);
 ```
 
 Insert the Hydra route:
 ```
-INSERT INTO routes (id, path, service_id, url, override_sensitive_headers, sensitive_headers) VALUES ('hydra_realm1', '/hydra/realm1/**', 'hydra_realm1', 'http://localhost:4444', true, {});
+INSERT INTO routes (id, http_methods, path, service_id, url, override_sensitive_headers, sensitive_headers) 
+     VALUES ('hydra_realm1', {'POST'}, '/hydra/realm1/**', 'hydra_realm1', 'http://localhost:4444', true, {});
 ```
 
 ## Hydra Configuration
@@ -156,13 +159,14 @@ Connect to Cassandra (see Acheron Configuration section above) and execute the f
 ```
 USE acheron;
 
-INSERT INTO routes (id, path, service_id, url, override_sensitive_headers) VALUES ('accounts', '/accounts/**', 'accounts', 'http://localhost:10000/accounts', false);
+INSERT INTO routes (id, http_methods, path, service_id, url, override_sensitive_headers)
+     VALUES ('accounts', {'*'}, '/accounts/**', 'accounts', 'http://localhost:10000/accounts', false);
 
-INSERT INTO plugins (id, name, route_id, consumer_id, config, enabled, created_at) 
-     VALUES (uuid(), 'oauth2', 'accounts', null, '', true, dateOf(now()));
+INSERT INTO plugins (id, name, route_id, consumer_id, http_methods, config, enabled, created_at) 
+     VALUES (uuid(), 'oauth2', 'accounts', null, {'*'}, '', true, dateOf(now()));
 
-INSERT INTO plugins (id, name, route_id, consumer_id, config, enabled, created_at) 
-     VALUES (uuid(), 'api_key', 'accounts', null, '', true, dateOf(now()));
+INSERT INTO plugins (id, name, route_id, consumer_id, http_methods, config, enabled, created_at) 
+     VALUES (uuid(), 'api_key', 'accounts', null, {'*'}, '', true, dateOf(now()));
 ```
 
 ### Create an OAuth2 client
@@ -208,7 +212,7 @@ For simplicity, in this example, we are getting a bearer token via the OAuth2 cl
 You can use online tools such as https://www.base64encode.org in order to encode your own client ID and client secret.
 
 ```
-$ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Basic Nzg4MWI4ZDYtMzZkMy00MzYwLWIzOGItYTRmNGVlOTZiMWYxOlpwbyk8dmo0V1pFVi1rIUQvbE9YNXdxKEVw" -d 'grant_type=client_credentials&scope=accounts' "http://localhost:8080/hydra/realm1/oauth2/token
+$ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Basic Nzg4MWI4ZDYtMzZkMy00MzYwLWIzOGItYTRmNGVlOTZiMWYxOlpwbyk8dmo0V1pFVi1rIUQvbE9YNXdxKEVw" -d 'grant_type=client_credentials&scope=accounts' "http://localhost:8080/hydra/realm1/oauth2/token"
 {"access_token":"YIoXNgdA3aKkkyNz1Q69mQN7-ftVsOsstVbekdY1Oj4.dCtHcIfmvGlxtfuwxExvAfnspK8qzkr198fGXh2tPew","expires_in":"3599","scope":"accounts","token_type":"bearer"}%  
 ```
 

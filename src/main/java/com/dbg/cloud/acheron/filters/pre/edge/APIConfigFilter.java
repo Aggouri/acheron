@@ -6,8 +6,10 @@ import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -17,22 +19,22 @@ public final class APIConfigFilter extends PreFilter {
 
     @Override
     public int filterOrder() {
-        return 13;
+        return 14;
     }
 
     @Override
     public Object run() {
         final RequestContext context = RequestContext.getCurrentContext();
-
         final String routeId = (String) context.get(AcheronRequestContextKeys.ROUTE_ID);
+        final String httpMethod = context.getRequest().getMethod();
 
         // simulate realm concept
         // TODO Come up with multi-realm concept
         context.set(AcheronRequestContextKeys.REALM_ID, "realm1");
 
-        List<PluginConfig> routeConfigurations = configStore.findByRoute(routeId);
-        List<PluginConfig> enabledPlugins = routeConfigurations.stream().filter(
-                pluginConfig -> (pluginConfig.isEnabled() && pluginConfig.getConsumerId() == null))
+        final Collection<PluginConfig> routeConfigurations = configStore.findByRoute(routeId);
+        final Collection<PluginConfig> enabledPlugins = routeConfigurations.stream().filter(
+                pluginConfig -> (shouldPluginConfigBeIncluded(pluginConfig, httpMethod)))
                 .collect(Collectors.toList());
 
         enabledPlugins.forEach(pluginConfig -> {
@@ -40,5 +42,14 @@ public final class APIConfigFilter extends PreFilter {
         });
 
         return null;
+    }
+
+    private boolean shouldPluginConfigBeIncluded(final PluginConfig pluginConfig, final String httpMethod) {
+        return pluginConfig.isEnabled() && pluginConfig.getConsumerId() == null &&
+                methodMatchesMethods(httpMethod, pluginConfig.getHttpMethods());
+    }
+
+    private boolean methodMatchesMethods(final String method, final @NonNull Set<String> methods) {
+        return methods.contains("*") || methods.contains(method);
     }
 }
