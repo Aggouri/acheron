@@ -4,7 +4,6 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.dbg.cloud.acheron.config.store.routing.RouteStore;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.netflix.zuul.filters.ZuulProperties;
 import org.springframework.data.cassandra.core.CassandraOperations;
 
@@ -14,7 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 
 @AllArgsConstructor
-@Slf4j
 public final class CassandraRouteStore implements RouteStore {
 
     private final CassandraOperations cassandraOperations;
@@ -46,7 +44,6 @@ public final class CassandraRouteStore implements RouteStore {
     public Set<String> findHttpMethodsByRouteId(final String routeId) {
         final Select select = QueryBuilder.select().from("routes");
         select.where(QueryBuilder.eq("id", routeId));
-
 
         final List<CassandraRoute> cassandraRoutes = cassandraOperations.select(select, CassandraRoute.class);
         final Optional<CassandraRoute> firstRoute = cassandraRoutes.stream().findFirst();

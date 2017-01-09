@@ -2,6 +2,7 @@ package com.dbg.cloud.acheron.filters.pre.authentication.oauth2;
 
 import com.dbg.cloud.acheron.AcheronHeaders;
 import com.dbg.cloud.acheron.AcheronRequestContextKeys;
+import com.dbg.cloud.acheron.config.store.consumers.Consumer;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.compliant.AccessToken;
 import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.compliant.CredentialsStruct;
@@ -11,6 +12,7 @@ import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.compliant.authent
 import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.compliant.introspection.IntrospectionOperation;
 import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.compliant.introspection.IntrospectionResult;
 import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.hydra.Hydra;
+import com.dbg.cloud.acheron.plugins.oauth2.OAuth2Store;
 import com.netflix.zuul.context.RequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,7 @@ import java.util.Optional;
 public final class OAuth2Filter extends PreFilter {
 
     private final RouteLocator routeLocator;
+    private final OAuth2Store oAuth2Store;
     private final String clientId;
     private final String clientSecret;
 
@@ -32,8 +35,10 @@ public final class OAuth2Filter extends PreFilter {
     private RestTemplateBuilder restTemplateBuilder;
 
 
-    public OAuth2Filter(final RouteLocator routeLocator, String clientId, String clientSecret) {
+    public OAuth2Filter(final RouteLocator routeLocator, final OAuth2Store oAuth2Store, String clientId,
+                        String clientSecret) {
         this.routeLocator = routeLocator;
+        this.oAuth2Store = oAuth2Store;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
     }
@@ -83,6 +88,11 @@ public final class OAuth2Filter extends PreFilter {
                 throwForbidden();
             }
 
+            if (tokenInfo.clientId() == null) {
+                log.error("Client ID is null. Not good.");
+                throwInternalServerError();
+            }
+
             /*****************
              * Inject headers
              *****************/
@@ -95,12 +105,22 @@ public final class OAuth2Filter extends PreFilter {
             /*********************
              * Add info to context
              *********************/
-            setUniqueConsumerIdOrFail(tokenInfo.clientId());
+            // Set Consumer ID
+            final Optional<Consumer> optionalConsumer = oAuth2Store.findConsumerByClientId(tokenInfo.clientId());
+            if (optionalConsumer.isPresent() && optionalConsumer.get().getId() != null) {
+                final Consumer consumer = optionalConsumer.get();
+                log.info("Determined caller is consumer with name = {} and id = {}", consumer.getName(),
+                        consumer.getId());
+                setUniqueConsumerIdOrFail(optionalConsumer.get().getId().toString());
+            } else {
+                log.error("Client ID does not correspond to any consumer. Not good.");
+                throwInternalServerError();
+            }
         } catch (AccessToken.BearerToken.BearerTokenException e) {
             // throw when there is no bearer token in the request
             throwInvalidAccessToken();
         } catch (IntrospectionOperation.TechnicalException | AuthenticationOperation.TechnicalException e) {
-            throwFailure(500, "{ \"error\": \"Internal server error\" }");
+            throwInternalServerError();
         }
 
         return null;

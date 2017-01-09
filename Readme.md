@@ -2,14 +2,14 @@ In Dante's Inferno, the Acheron river forms the border of Hell. Following Greek 
 
 > Warning: This project is a work in progress.
 
-# Introduction
+# 1. Introduction
 Acheron is a configurable API gateway and management server, offering pluggable authentication, authorisation and request transformation options per API and consumer. Acheron's goal is to be lightweight, scalable and easy to configure. We'll see how that works out :-)
 
 The project is heavily inspired by Kong, Apigee, Mashery and similar platforms.
 
 ![Acheron high level image](docs/readme/images/acheron.png)
 
-# Architecture
+# 2. Architecture
 
 ## Core
 Acheron is a Spring Boot application embedding Zuul, the edge server of Netflix. This means that, at its core, it's nothing more than a glorified set of Zuul filters that are responsible for handling incoming requests.
@@ -31,7 +31,7 @@ An admin API is planned in the immediate future. Currently, you have to execute 
 ## OAuth2
 The OAuth2 plugin uses Hydra, a lightweight, scalable and cloud native OAuth2 authorisation server (from ORY).
 
-# Running Acheron, Cassandra and Hydra
+# 3. Running Acheron, Cassandra and Hydra
 This is a very crude set of commands that kinda gives an idea of what is required to run the whole thing. This section will be updated later, when the project has progressed.
 
 ## Acheron
@@ -65,7 +65,7 @@ From then on:
 $ SYSTEM_SECRET=awesomesecretthatislongenoughtonotbeignored docker-compose start
 ```
 
-# Initial Configuration
+# 4. Initial Configuration
 ## Acheron Configuration
 Acheron stores configuration in Apache Cassandra. Currently, the store is not automatically created, so you need to do it yourself, using the instructions in this section.
 
@@ -84,6 +84,13 @@ Create the routing and plugin config tables:
 CREATE KEYSPACE IF NOT EXISTS acheron WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
 
 USE acheron;
+
+CREATE TABLE consumers (
+    id uuid,
+    name text,
+    created_at timestamp,
+    PRIMARY KEY(id)
+);
 
 CREATE TABLE routes (
     id text,
@@ -113,6 +120,17 @@ CREATE TABLE plugins (
 CREATE INDEX plugins_route_id_idx ON plugins (route_id);
 CREATE INDEX plugins_consumer_id_idx ON plugins (consumer_id);
 CREATE INDEX plugins_name_idx ON plugins (name);
+
+CREATE TABLE oauth2_clients (
+    id text,
+    consumer_id uuid,
+    consumer_name text,
+    consumer_created_at timestamp,
+    created_at timestamp,
+    PRIMARY KEY(id)
+);
+
+CREATE INDEX oauth2_clients_consumer_id_idx ON oauth2_clients (consumer_id);
 ```
 
 Insert the Hydra route:
@@ -140,7 +158,7 @@ Client Secret: YCWwEAqnogn(O0uBFrqh$_9hsR
 ```
 The client ID and client secret need to be exported as environment variables prior to running Acheron. See the instructions for running Acheron.
 
-# Play
+# 5. Play
 This section is a short tutorial allowing you to play with Acheron. It assumes you have an API running at ```http://localhost:10000/accounts```.
 
 ## Preparation
@@ -169,6 +187,13 @@ INSERT INTO plugins (id, name, route_id, consumer_id, http_methods, config, enab
      VALUES (uuid(), 'api_key', 'accounts', null, {'*'}, '', true, dateOf(now()));
 ```
 
+This creates a new route and activates API Key auth and OAuth2 for that route. We now need to create a consumer, which represents the caller of the API:
+
+```
+INSERT INTO consumers (id, name, created_at)
+     VALUES (9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()));
+```
+
 ### Create an OAuth2 client
 To make calls to an OAuth2-protected API, you need to create an OAuth2 client with at least a scope that is equal to the route name, i.e. scopes must contain 'accounts'. This will probably change at a later date, when we get the concepts right.
 
@@ -182,6 +207,14 @@ $ hydra clients create -n "dbp-client" \
 ```
 
 Take a note of the returned client ID and client secret. They are used in the next section.
+
+### Register OAuth2 client in Acheron
+Creating an OAuth2 client will be automated via the Admin API at a later date. Right now, we have to register the client ID in Cassandra and link it to the consumer. Replace ```<client_id>``` with the client ID returned in the previous step and execute the following statement in Cassandra:
+
+```
+INSERT INTO oauth2_clients (id, consumer_id, consumer_name, consumer_created_at, created_at)
+     VALUES ('<client_id>', 9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()), dateOf(now()));
+```
 
 ## Call the API
 We assume Acheron runs on port 8080. 
@@ -198,11 +231,11 @@ $ curl -X GET http://localhost:8080/accounts
 ### Calling the API with an API Key
 Adding an API Key is a first step to the right direction, but since we don't have an OAuth2 access token, the following request will fail:
 ```
-$ curl -X GET -H "API_KEY: SECRET_7881b8d6-36d3-4360-b38b-a4f4ee96b1f1" "http://localhost:8080/accounts"
+$ curl -X GET -H "API_KEY: SECRET_9f065137-81c5-48d5-8977-f1015834cc93" "http://localhost:8080/accounts"
 { "error": "Invalid access token" }%
 ```
 
-> Note that at this stage, the API Key is hardcoded to be ```SECRET_<somestring>```. When OAuth2 is also enabled, ```<somestring>``` must be equal to the OAuth2 client ID. This will definitely change.
+> Note that at this stage, the API Key is hardcoded to be ```SECRET_<somestring>```. When OAuth2 is also enabled, ```<somestring>``` must be equal to the Consumer ID. This will definitely change.
 
 ### Calling the API with an OAuth2 token
 To obtain an access token for the accounts route, we are going to use Hydra and the OAuth2 client information we created above.

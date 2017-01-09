@@ -26,6 +26,7 @@ store:
     enabled: true
     routing: true
     plugins: true
+    consumers: true
 
 # Cassandra configuration
 # Can also be passed as environment variables:
