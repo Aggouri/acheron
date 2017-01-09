@@ -121,6 +121,19 @@ CREATE INDEX plugins_route_id_idx ON plugins (route_id);
 CREATE INDEX plugins_consumer_id_idx ON plugins (consumer_id);
 CREATE INDEX plugins_name_idx ON plugins (name);
 
+CREATE TABLE api_key_keys (
+    id uuid,
+    api_key uuid,
+    consumer_id uuid,
+    consumer_name text,
+    consumer_created_at timestamp,
+    created_at timestamp,
+    PRIMARY KEY(id)
+);
+
+CREATE INDEX api_key_keys_api_key_idx ON api_key_keys (api_key);
+CREATE INDEX api_key_keys_consumer_id_idx ON api_key_keys (consumer_id);
+
 CREATE TABLE oauth2_clients (
     id text,
     consumer_id uuid,
@@ -216,6 +229,14 @@ INSERT INTO oauth2_clients (id, consumer_id, consumer_name, consumer_created_at,
      VALUES ('<client_id>', 9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()), dateOf(now()));
 ```
 
+### Generate/Register API key in Acheron
+To make calls with an API key, a consumer needs to have one. This will be automated later, but for now, we need to do it manually in Cassandra.
+
+```
+INSERT INTO api_key_keys (id, api_key, consumer_id, consumer_name, consumer_created_at, created_at)
+     VALUES (uuid(), faed995a-c797-479f-9352-a7b2bf1748ad, 9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()), dateOf(now()));
+```
+
 ## Call the API
 We assume Acheron runs on port 8080. 
 
@@ -231,11 +252,9 @@ $ curl -X GET http://localhost:8080/accounts
 ### Calling the API with an API Key
 Adding an API Key is a first step to the right direction, but since we don't have an OAuth2 access token, the following request will fail:
 ```
-$ curl -X GET -H "API_KEY: SECRET_9f065137-81c5-48d5-8977-f1015834cc93" "http://localhost:8080/accounts"
+$ curl -X GET -H "API_KEY: faed995a-c797-479f-9352-a7b2bf1748ad" "http://localhost:8080/accounts"
 { "error": "Invalid access token" }%
 ```
-
-> Note that at this stage, the API Key is hardcoded to be ```SECRET_<somestring>```. When OAuth2 is also enabled, ```<somestring>``` must be equal to the Consumer ID. This will definitely change.
 
 ### Calling the API with an OAuth2 token
 To obtain an access token for the accounts route, we are going to use Hydra and the OAuth2 client information we created above.

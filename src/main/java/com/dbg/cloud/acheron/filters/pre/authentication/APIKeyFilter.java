@@ -1,17 +1,21 @@
 package com.dbg.cloud.acheron.filters.pre.authentication;
 
+import com.dbg.cloud.acheron.config.store.consumers.Consumer;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
+import com.dbg.cloud.acheron.plugins.apikey.APIKeyStore;
 import com.netflix.zuul.context.RequestContext;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Slf4j
+@AllArgsConstructor
 public final class APIKeyFilter extends PreFilter {
 
     public static final String HEADER_API_KEY = "API_KEY";
+
+    private final APIKeyStore apiKeyStore;
 
     @Override
     public int filterOrder() {
@@ -43,13 +47,21 @@ public final class APIKeyFilter extends PreFilter {
     }
 
     private Optional<String> resolveConsumerId(final String apiKey) {
-        // FIXME Implement proper API Key logic
-        String consumerId = null;
-
+        final String consumerId;
         if (apiKey != null) {
-            final String pattern = "SECRET_(?<CONSUMER>.+)";
-            final Matcher matcher = Pattern.compile(pattern).matcher(apiKey);
-            consumerId = matcher.matches() ? matcher.group("CONSUMER") : null;
+            final Optional<Consumer> optionalConsumer = apiKeyStore.findConsumerByAPIKey(apiKey);
+
+            if (optionalConsumer.isPresent() && optionalConsumer.get().getId() != null) {
+                final Consumer consumer = optionalConsumer.get();
+                consumerId = optionalConsumer.get().getId().toString();
+                log.info("Determined caller is consumer with name = {} and id = {}", consumer.getName(),
+                        consumer.getId());
+            } else {
+                consumerId = null;
+                log.info("API key does not correspond to any consumer");
+            }
+        } else {
+            consumerId = null;
         }
 
         return Optional.ofNullable(consumerId);
