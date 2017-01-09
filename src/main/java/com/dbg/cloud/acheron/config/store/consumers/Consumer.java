@@ -21,4 +21,12 @@ public interface Consumer {
         private final String name;
         private final Date createdAt;
     }
+
+    @AllArgsConstructor
+    @Getter
+    final class ForCreation implements Consumer {
+        private final UUID id = null;
+        private final Date createdAt = null;
+        private final String name;
+    }
 }

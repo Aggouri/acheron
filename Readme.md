@@ -89,8 +89,8 @@ CREATE TABLE consumers (
     id uuid,
     name text,
     created_at timestamp,
-    PRIMARY KEY(id)
-);
+    PRIMARY KEY(id, name)
+) WITH CLUSTERING ORDER BY (name ASC);
 
 CREATE TABLE routes (
     id text,

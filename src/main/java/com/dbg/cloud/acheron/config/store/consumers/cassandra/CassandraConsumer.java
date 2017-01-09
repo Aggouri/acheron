@@ -1,9 +1,7 @@
 package com.dbg.cloud.acheron.config.store.consumers.cassandra;
 
 import com.dbg.cloud.acheron.config.store.consumers.Consumer;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.cassandra.mapping.Column;
 import org.springframework.data.cassandra.mapping.PrimaryKey;
 import org.springframework.data.cassandra.mapping.Table;
@@ -16,6 +14,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
 public final class CassandraConsumer implements Consumer, Serializable {
 
     @PrimaryKey
