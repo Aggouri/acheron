@@ -135,13 +135,16 @@ CREATE INDEX api_key_keys_api_key_idx ON api_key_keys (api_key);
 CREATE INDEX api_key_keys_consumer_id_idx ON api_key_keys (consumer_id);
 
 CREATE TABLE oauth2_clients (
-    id text,
+    id uuid,
+    client_id uuid,
     consumer_id uuid,
     consumer_name text,
     consumer_created_at timestamp,
     created_at timestamp,
     PRIMARY KEY(id)
 );
+
+CREATE INDEX oauth2_clients_client_id_idx ON oauth2_clients (client_id);
 
 CREATE INDEX oauth2_clients_consumer_id_idx ON oauth2_clients (consumer_id);
 ```
@@ -225,8 +228,8 @@ Take a note of the returned client ID and client secret. They are used in the ne
 Creating an OAuth2 client will be automated via the Admin API at a later date. Right now, we have to register the client ID in Cassandra and link it to the consumer. Replace ```<client_id>``` with the client ID returned in the previous step and execute the following statement in Cassandra:
 
 ```
-INSERT INTO oauth2_clients (id, consumer_id, consumer_name, consumer_created_at, created_at)
-     VALUES ('<client_id>', 9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()), dateOf(now()));
+INSERT INTO oauth2_clients (id, client_id, consumer_id, consumer_name, consumer_created_at, created_at)
+     VALUES (uuid(), <client_id>, 9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()), dateOf(now()));
 ```
 
 ### Generate/Register API key in Acheron

@@ -17,8 +17,11 @@ import java.util.UUID;
 @EqualsAndHashCode
 final class CassandraOAuth2Client implements Serializable {
 
-    @PrimaryKey(value = "id")
-    private String clientId;
+    @PrimaryKey
+    private String id;
+
+    @Column(value = "client_id")
+    private UUID clientId;
 
     @Column(value = "consumer_id")
     private UUID consumerId;
