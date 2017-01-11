@@ -3,6 +3,7 @@ package com.dbg.cloud.acheron.admin.consumers;
 import com.dbg.cloud.acheron.config.store.consumers.Consumer;
 import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
 import com.fasterxml.jackson.annotation.JsonView;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,21 +16,16 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin/consumers")
+@AllArgsConstructor
 @Slf4j
 final class ConsumersController {
 
     private final ConsumerStore consumerStore;
 
-    public ConsumersController(ConsumerStore consumerStore) {
-        this.consumerStore = consumerStore;
-    }
-
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<ConsumerTO> readConsumers() {
         final List<Consumer> consumerList = consumerStore.findAll();
-        return consumerList.stream().map(consumer ->
-                new ConsumerTO(consumer.getId().toString(), consumer.getName(), consumer.getCreatedAt()))
-                .collect(Collectors.toList());
+        return consumerList.stream().map(consumer -> new ConsumerTO(consumer)).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/{consumerId}", method = RequestMethod.GET)

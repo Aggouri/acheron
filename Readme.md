@@ -1,6 +1,6 @@
 In Dante's Inferno, the Acheron river forms the border of Hell. Following Greek mythology, Charon ferries souls across this river to Hell.
 
-> Warning: This project is a work in progress.
+> Warning: This project is a work in progress. Everything is in flux and is super-insecure.
 
 # 1. Introduction
 Acheron is a configurable API gateway and management server, offering pluggable authentication, authorisation and request transformation options per API and consumer. Acheron's goal is to be lightweight, scalable and easy to configure. We'll see how that works out :-)
@@ -26,7 +26,7 @@ One can see filters as plugins working together to handle HTTP requests and resp
 ## Configuration Store
 The route configuration is stored in Apache Cassandra.
 
-An admin API is planned in the immediate future. Currently, you have to execute all CQL statements yourself.
+An admin API is in the works. Currently, you have to execute some CQL statements yourself.
 
 ## OAuth2
 The OAuth2 plugin uses Hydra, a lightweight, scalable and cloud native OAuth2 authorisation server (from ORY).
@@ -102,6 +102,7 @@ CREATE TABLE routes (
     retryable boolean,
     override_sensitive_headers boolean,
     sensitive_headers Set<text>,
+    created_at timestamp,
     PRIMARY KEY(id)
 );
 
@@ -151,8 +152,8 @@ CREATE INDEX oauth2_clients_consumer_id_idx ON oauth2_clients (consumer_id);
 
 Insert the Hydra route:
 ```
-INSERT INTO routes (id, http_methods, path, service_id, url, override_sensitive_headers, sensitive_headers) 
-     VALUES ('hydra_realm1', {'POST'}, '/hydra/realm1/**', 'hydra_realm1', 'http://localhost:4444', true, {});
+INSERT INTO routes (id, http_methods, path, service_id, url, override_sensitive_headers, sensitive_headers, created_at) 
+     VALUES ('hydra_realm1', {'POST'}, '/hydra/realm1/**', 'hydra_realm1', 'http://localhost:4444', true, {}, dateOf(now()));
 ```
 
 ## Hydra Configuration
@@ -185,16 +186,31 @@ First, we are going to create the "accounts" route and enable the following plug
 
 This set up effectively means that in order to call the API we need to provide an API Key and an OAuth2 access token. 
 
-Since no admin interface currently exists, we need to execute all steps manually, via cqlsh in Cassandra and the hydra CLI in Hydra.
+> Since some of the REST administration endpoints are not yet there, we need to execute a part of the configuration steps manually, via cqlsh in Cassandra and the hydra CLI in Hydra.
 
-### Set up the route
+### Create the route
+Execute the following request on the ```/admin/routes``` endpoint. This creates a new route.
+```
+$ curl -X POST -H "Content-Type: application/json" -d '{
+    "id": "accounts",
+    "http_methods": [
+      "*"
+    ],
+    "path": "/accounts/**",
+    "service_id": "accounts",
+    "url": "http://localhost:10000/accounts",
+    "keep_prefix": false,
+    "retryable": false,
+    "override_sensitive_headers": false,
+    "sensitive_headers": []
+}' "http://localhost:8080/admin/routes"
+```
+
+### Configure OAuth2 and API Key auth on the route
 Connect to Cassandra (see Acheron Configuration section above) and execute the following statements:
 
 ```
 USE acheron;
-
-INSERT INTO routes (id, http_methods, path, service_id, url, override_sensitive_headers)
-     VALUES ('accounts', {'*'}, '/accounts/**', 'accounts', 'http://localhost:10000/accounts', false);
 
 INSERT INTO plugins (id, name, route_id, consumer_id, http_methods, config, enabled, created_at) 
      VALUES (uuid(), 'oauth2', 'accounts', null, {'*'}, '', true, dateOf(now()));
@@ -203,12 +219,17 @@ INSERT INTO plugins (id, name, route_id, consumer_id, http_methods, config, enab
      VALUES (uuid(), 'api_key', 'accounts', null, {'*'}, '', true, dateOf(now()));
 ```
 
-This creates a new route and activates API Key auth and OAuth2 for that route. We now need to create a consumer, which represents the caller of the API:
+This activates API Key auth and OAuth2 for that route. 
+
+### Create a consumer for our API
+We now need to create a consumer, which represents the caller of the API:
 
 ```
-INSERT INTO consumers (id, name, created_at)
-     VALUES (9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()));
+$ curl -X POST -H "Content-Type: application/json" -d '{
+	"name": "Awesome Consumer"
+}' "http://localhost:8080/admin/consumers"
 ```
+Take a note of the returned Consumer ID (```id``` column of the returned JSON). You will use it to map the OAuth2 credentials to the consumer.
 
 ### Create an OAuth2 client
 To make calls to an OAuth2-protected API, you need to create an OAuth2 client with at least a scope that is equal to the route name, i.e. scopes must contain 'accounts'. This will probably change at a later date, when we get the concepts right.
@@ -225,19 +246,19 @@ $ hydra clients create -n "dbp-client" \
 Take a note of the returned client ID and client secret. They are used in the next section.
 
 ### Register OAuth2 client in Acheron
-Creating an OAuth2 client will be automated via the Admin API at a later date. Right now, we have to register the client ID in Cassandra and link it to the consumer. Replace ```<client_id>``` with the client ID returned in the previous step and execute the following statement in Cassandra:
+Creating an OAuth2 client will be automated via the REST Admin API at a later date. Right now, we have to register the client ID in Cassandra and link it to the consumer. Replace ```<client_id>``` with the client ID returned in the previous step, then ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following statement in Cassandra:
 
 ```
 INSERT INTO oauth2_clients (id, client_id, consumer_id, consumer_name, consumer_created_at, created_at)
-     VALUES (uuid(), <client_id>, 9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()), dateOf(now()));
+     VALUES (uuid(), <client_id>, <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
 ```
 
 ### Generate/Register API key in Acheron
-To make calls with an API key, a consumer needs to have one. This will be automated later, but for now, we need to do it manually in Cassandra.
+To make calls with an API key, a consumer needs to have one. This will be automated later, but for now, we need to do create the key manually in Cassandra. Replace ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following statement:
 
 ```
 INSERT INTO api_key_keys (id, api_key, consumer_id, consumer_name, consumer_created_at, created_at)
-     VALUES (uuid(), faed995a-c797-479f-9352-a7b2bf1748ad, 9f065137-81c5-48d5-8977-f1015834cc93, 'Awesome Consumer', dateOf(now()), dateOf(now()));
+     VALUES (uuid(), faed995a-c797-479f-9352-a7b2bf1748ad, <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
 ```
 
 ## Call the API

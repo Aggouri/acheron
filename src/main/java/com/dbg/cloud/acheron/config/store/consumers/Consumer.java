@@ -2,6 +2,7 @@ package com.dbg.cloud.acheron.config.store.consumers;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.Date;
 import java.util.UUID;
@@ -16,6 +17,7 @@ public interface Consumer {
 
     @AllArgsConstructor
     @Getter
+    @ToString
     final class Smart implements Consumer {
         private final UUID id;
         private final String name;
@@ -24,9 +26,12 @@ public interface Consumer {
 
     @AllArgsConstructor
     @Getter
+    @ToString
     final class ForCreation implements Consumer {
-        private final UUID id = null;
-        private final Date createdAt = null;
         private final String name;
+
+        // already set
+        private final UUID id = null;
+        private final Date createdAt = new Date();
     }
 }
