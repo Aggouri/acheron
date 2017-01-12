@@ -39,6 +39,7 @@ public final class APIConfigFilter extends PreFilter {
 
         enabledPlugins.forEach(pluginConfig -> {
             context.set("plugins." + pluginConfig.getName() + ".enabled");
+            context.set("plugins." + pluginConfig.getName() + ".config", pluginConfig.getConfig());
         });
 
         return null;

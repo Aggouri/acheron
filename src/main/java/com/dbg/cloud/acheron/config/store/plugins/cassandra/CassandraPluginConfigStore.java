@@ -69,7 +69,7 @@ public final class CassandraPluginConfigStore implements PluginConfigStore {
                 pluginConfig.getRouteId(),
                 pluginConfig.getConsumerId(),
                 pluginConfig.getHttpMethods(),
-                pluginConfig.getConfig(),
+                pluginConfig.getConfig() != null ? pluginConfig.getConfig().toString() : null,
                 pluginConfig.isEnabled(),
                 createdAt));
     }
@@ -83,7 +83,7 @@ public final class CassandraPluginConfigStore implements PluginConfigStore {
                 pluginConfig.getRouteId(),
                 pluginConfig.getConsumerId(),
                 pluginConfig.getHttpMethods(),
-                pluginConfig.getConfig(),
+                pluginConfig.getConfig() != null ? pluginConfig.getConfig().toString() : null,
                 pluginConfig.isEnabled(),
                 createdAt));
     }

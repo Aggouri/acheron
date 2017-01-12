@@ -3,6 +3,8 @@ package com.dbg.cloud.acheron.admin.pluginconfig;
 import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -18,8 +20,8 @@ final class PluginConfigTO {
 
     public PluginConfigTO(final PluginConfig pluginConfig) {
         this(safeUUIDString(pluginConfig.getId()), pluginConfig.getName(), pluginConfig.getRouteId(),
-                safeUUIDString(pluginConfig.getConsumerId()), pluginConfig.getConfig(), pluginConfig.isEnabled(),
-                pluginConfig.getHttpMethods(), pluginConfig.getCreatedAt());
+                safeUUIDString(pluginConfig.getConsumerId()), new AnyJSON(pluginConfig.getConfig()),
+                pluginConfig.isEnabled(), pluginConfig.getHttpMethods(), pluginConfig.getCreatedAt());
     }
 
     private static String safeUUIDString(final UUID uuid) {
@@ -41,7 +43,9 @@ final class PluginConfigTO {
     private final String consumerId;
 
     @JsonView(View.Create.class)
-    private final String config;
+    @JsonDeserialize(using = AnyJSONDeserializer.class)
+    @JsonSerialize(using = AnyJSONSerializer.class)
+    private AnyJSON config;
 
     @JsonView({View.Create.class, View.Merge.class})
     private final Boolean enabled;
@@ -52,4 +56,8 @@ final class PluginConfigTO {
 
     @JsonProperty("created_at")
     private final Date createdAt;
+
+    public String safeGetConfig() {
+        return this.config != null ? this.config.jsonValue() : null;
+    }
 }

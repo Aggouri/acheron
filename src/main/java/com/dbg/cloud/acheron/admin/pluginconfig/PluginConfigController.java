@@ -55,7 +55,7 @@ final class PluginConfigController {
                                 pluginConfig.getHttpMethods(),
                                 pluginConfig.getConsumerId() != null ?
                                         UUID.fromString(pluginConfig.getConsumerId()) : null,
-                                pluginConfig.getConfig(),
+                                pluginConfig.safeGetConfig(),
                                 pluginConfig.getEnabled() != null ? pluginConfig.getEnabled() : true))));
     }
 
@@ -81,7 +81,7 @@ final class PluginConfigController {
                                 pluginConfig.getHttpMethods(),
                                 pluginConfig.getConsumerId() != null ?
                                         UUID.fromString(pluginConfig.getConsumerId()) : null,
-                                pluginConfig.getConfig(),
+                                pluginConfig.safeGetConfig(),
                                 pluginConfig.getEnabled() != null ?
                                         pluginConfig.getEnabled() : true,
                                 pluginConfig.getCreatedAt()
@@ -100,7 +100,7 @@ final class PluginConfigController {
         }
 
         final UUID uuid = parseUUID(pluginConfigId).get(); // safe due to validation above
-        final PluginConfig existingPluginConfig = pluginConfigStore.findById(uuid)
+        pluginConfigStore.findById(uuid)
                 .orElseThrow(() -> new PluginConfigNotFoundException(pluginConfig.getId()));
 
         return ResponseEntity
@@ -114,7 +114,7 @@ final class PluginConfigController {
                                                 pluginConfig.getHttpMethods(),
                                                 pluginConfig.getConsumerId() != null ?
                                                         UUID.fromString(pluginConfig.getConsumerId()) : null,
-                                                pluginConfig.getConfig(),
+                                                pluginConfig.safeGetConfig(),
                                                 pluginConfig.getEnabled() != null ? pluginConfig.getEnabled() : true,
                                                 pluginConfig.getCreatedAt()
                                         )))));
@@ -150,7 +150,9 @@ final class PluginConfigController {
                 (pluginConfig.getName() == null || pluginConfig.getName().isEmpty() ||
                         SUPPORTED_PLUGINS.contains(pluginConfig.getName())) &&
                 // object id is either not present OR equal to id
-                (pluginConfig.getId() == null || id.equals(pluginConfig.getId()));
+                (pluginConfig.getId() == null || id.equals(pluginConfig.getId())) &&
+                // if consumer if is present, it's a UUID
+                (pluginConfig.getConsumerId() == null || parseUUID(pluginConfig.getConsumerId()).isPresent());
     }
 
     private Optional<UUID> parseUUID(final String candidateUUID) {
