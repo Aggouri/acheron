@@ -28,7 +28,7 @@ final class RoutesController {
     }
 
     @RequestMapping(value = "/{routeId}", method = RequestMethod.GET)
-    public ResponseEntity<?> readRoute(@PathVariable final String routeId) {
+    public ResponseEntity<?> readRoute(final @PathVariable String routeId) {
         if (routeId == null) {
             throw new RouteNotFoundException(routeId);
         }
@@ -38,7 +38,7 @@ final class RoutesController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
-    public ResponseEntity<?> addRoute(@JsonView(View.Create.class) @RequestBody final RouteTO route) {
+    public ResponseEntity<?> addRoute(final @JsonView(View.Create.class) @RequestBody RouteTO route) {
         if (!validateRoute(route)) {
             return ResponseEntity.badRequest().build();
         }
@@ -58,7 +58,7 @@ final class RoutesController {
     }
 
     @RequestMapping(value = "/{routeId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteRoute(@PathVariable final String routeId) {
+    public ResponseEntity<?> deleteRoute(final @PathVariable String routeId) {
         if (routeId == null) {
             throw new RouteNotFoundException(routeId);
         }

@@ -207,22 +207,28 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
 ```
 
 ### Configure OAuth2 and API Key auth on the route
-Connect to Cassandra (see Acheron Configuration section above) and execute the following statements:
+Execute the following requests on the ```/admin/plugin-configs``` endpoint. This activates API Key auth and OAuth2 for the new route. 
 
 ```
-USE acheron;
+$ curl -X POST -H "Content-Type: application/json" -d '{
+"name": "api_key",
+"route_id": "accounts",
+"http_methods": [
+  "*"
+ ]
+}' "http://localhost:8080/admin/plugin-configs"
 
-INSERT INTO plugins (id, name, route_id, consumer_id, http_methods, config, enabled, created_at) 
-     VALUES (uuid(), 'oauth2', 'accounts', null, {'*'}, '', true, dateOf(now()));
-
-INSERT INTO plugins (id, name, route_id, consumer_id, http_methods, config, enabled, created_at) 
-     VALUES (uuid(), 'api_key', 'accounts', null, {'*'}, '', true, dateOf(now()));
+$ curl -X POST -H "Content-Type: application/json" -d '{
+"name": "oauth2",
+"route_id": "accounts",
+"http_methods": [
+  "*"
+ ]
+}' "http://localhost:8080/admin/plugin-configs"
 ```
-
-This activates API Key auth and OAuth2 for that route. 
 
 ### Create a consumer for our API
-We now need to create a consumer, which represents the caller of the API:
+Execute the following request on the ```/admin/consumers``` endpoint. This creates a consumer, which represents the caller of the API:
 
 ```
 $ curl -X POST -H "Content-Type: application/json" -d '{

@@ -1,15 +1,14 @@
 package com.dbg.cloud.acheron.config.store.plugins.cassandra;
 
 import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.cassandra.mapping.Column;
 import org.springframework.data.cassandra.mapping.PrimaryKey;
 import org.springframework.data.cassandra.mapping.Table;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,6 +16,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
 public final class CassandraPluginConfig implements PluginConfig, Serializable {
 
     @PrimaryKey
@@ -38,7 +39,7 @@ public final class CassandraPluginConfig implements PluginConfig, Serializable {
     private boolean enabled;
 
     @Column(value = "created_at")
-    private Date createdAt;
+    private Date createdAt = new Date();
 
     @Override
     public UUID getId() {
@@ -48,5 +49,9 @@ public final class CassandraPluginConfig implements PluginConfig, Serializable {
     @Override
     public String getName() {
         return pk.getName();
+    }
+
+    public Set<String> getHttpMethods() {
+        return this.httpMethods != null ? this.httpMethods : new HashSet<>();
     }
 }

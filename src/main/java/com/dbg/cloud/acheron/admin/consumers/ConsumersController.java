@@ -2,6 +2,8 @@ package com.dbg.cloud.acheron.admin.consumers;
 
 import com.dbg.cloud.acheron.config.store.consumers.Consumer;
 import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
+import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
+import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 final class ConsumersController {
 
     private final ConsumerStore consumerStore;
+    private final PluginConfigStore pluginConfigStore;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<ConsumerTO> readConsumers() {
@@ -29,7 +32,7 @@ final class ConsumersController {
     }
 
     @RequestMapping(value = "/{consumerId}", method = RequestMethod.GET)
-    public ResponseEntity<?> readConsumer(@PathVariable final String consumerId) {
+    public ResponseEntity<?> readConsumer(final @PathVariable String consumerId) {
         final UUID uuidConsumerId =
                 parseConsumerUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
         final Optional<Consumer> optionalConsumer = consumerStore.findById(uuidConsumerId);
@@ -39,7 +42,7 @@ final class ConsumersController {
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
-    public ResponseEntity<?> addConsumer(@JsonView(View.Create.class) @RequestBody final ConsumerTO consumer) {
+    public ResponseEntity<?> addConsumer(final @JsonView(View.Create.class) @RequestBody ConsumerTO consumer) {
         // We only deserialize 'name'
         if (!validateConsumer(consumer)) {
             return ResponseEntity.badRequest().build();
@@ -51,10 +54,16 @@ final class ConsumersController {
     }
 
     @RequestMapping(value = "/{consumerId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteConsumer(@PathVariable final String consumerId) {
+    public ResponseEntity<?> deleteConsumer(final @PathVariable String consumerId) {
         final UUID uuidConsumerId =
                 parseConsumerUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
         consumerStore.deleteById(uuidConsumerId);
+
+        // Delete all plugin configs linked to the consumer
+        final List<PluginConfig> consumerPluginConfigs = pluginConfigStore.findByConsumer(uuidConsumerId);
+
+        consumerPluginConfigs.forEach(
+                consumerPluginConfig -> pluginConfigStore.deleteById(consumerPluginConfig.getId()));
 
         return ResponseEntity.noContent().build();
     }
