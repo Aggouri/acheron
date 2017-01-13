@@ -9,7 +9,7 @@ import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.OAuth2Filter;
 import com.dbg.cloud.acheron.filters.pre.authorization.ACLFilter;
 import com.dbg.cloud.acheron.filters.pre.edge.*;
 import com.dbg.cloud.acheron.filters.pre.transformation.CorrelationIDFilter;
-import com.dbg.cloud.acheron.plugins.apikey.APIKeyStore;
+import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import com.dbg.cloud.acheron.plugins.oauth2.OAuth2Store;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.netflix.zuul.filters.RouteLocator;

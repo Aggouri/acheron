@@ -1,8 +1,7 @@
-package com.dbg.cloud.acheron.plugins.apikey.cassandra;
+package com.dbg.cloud.acheron.plugins.apikey.store.cassandra;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import com.dbg.cloud.acheron.plugins.apikey.store.APIKey;
+import lombok.*;
 import org.springframework.data.cassandra.mapping.Column;
 import org.springframework.data.cassandra.mapping.PrimaryKey;
 import org.springframework.data.cassandra.mapping.Table;
@@ -15,13 +14,16 @@ import java.util.UUID;
 @Getter
 @Setter
 @EqualsAndHashCode
-class CassandraAPIKey implements Serializable {
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
+class CassandraAPIKey implements APIKey, Serializable {
 
     @PrimaryKey
     private UUID id;
 
     @Column(value = "api_key")
-    private UUID apiKey;
+    private String apiKey;
 
     @Column(value = "consumer_id")
     private UUID consumerId;
@@ -34,4 +36,8 @@ class CassandraAPIKey implements Serializable {
 
     @Column(value = "created_at")
     private Date createdAt;
+
+    public String getAPIKey() {
+        return apiKey;
+    }
 }

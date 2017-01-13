@@ -1,6 +1,6 @@
-package com.dbg.cloud.acheron.plugins.apikey.cassandra;
+package com.dbg.cloud.acheron.plugins.apikey.store.cassandra;
 
-import com.dbg.cloud.acheron.plugins.apikey.APIKeyStore;
+import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

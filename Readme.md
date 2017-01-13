@@ -124,7 +124,7 @@ CREATE INDEX plugins_name_idx ON plugins (name);
 
 CREATE TABLE api_key_keys (
     id uuid,
-    api_key uuid,
+    api_key text,
     consumer_id uuid,
     consumer_name text,
     consumer_created_at timestamp,
@@ -176,7 +176,7 @@ Client Secret: YCWwEAqnogn(O0uBFrqh$_9hsR
 The client ID and client secret need to be exported as environment variables prior to running Acheron. See the instructions for running Acheron.
 
 # 5. Play
-This section is a short tutorial allowing you to play with Acheron. It assumes you have an API running at ```http://localhost:10000/accounts```.
+This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and you have an API running at ```http://localhost:10000/accounts```.
 
 ## Preparation
 First, we are going to create the "accounts" route and enable the following plugins for that route:
@@ -251,6 +251,17 @@ $ hydra clients create -n "dbp-client" \
 
 Take a note of the returned client ID and client secret. They are used in the next section.
 
+### Generate/Register API key in Acheron
+To make calls with an API key, a consumer needs to have one. Replace ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following request against the ```/admin/consumers/<consumer_id>/api-keys``` endpoint:
+
+```
+$ curl -X POST -H "Content-Type: application/json" -d '{
+	"api_key": "faed995a-c797-479f-9352-a7b2bf1748ad"
+}' "http://localhost:8080/admin/consumers/<consumer_id>/api-keys"
+```
+
+> Here we are forcing the API Key to be a specific string. Normally, you would let Acheron generate one for you.
+
 ### Register OAuth2 client in Acheron
 Creating an OAuth2 client will be automated via the REST Admin API at a later date. Right now, we have to register the client ID in Cassandra and link it to the consumer. Replace ```<client_id>``` with the client ID returned in the previous step, then ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following statement in Cassandra:
 
@@ -259,17 +270,7 @@ INSERT INTO oauth2_clients (id, client_id, consumer_id, consumer_name, consumer_
      VALUES (uuid(), <client_id>, <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
 ```
 
-### Generate/Register API key in Acheron
-To make calls with an API key, a consumer needs to have one. This will be automated later, but for now, we need to do create the key manually in Cassandra. Replace ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following statement:
-
-```
-INSERT INTO api_key_keys (id, api_key, consumer_id, consumer_name, consumer_created_at, created_at)
-     VALUES (uuid(), faed995a-c797-479f-9352-a7b2bf1748ad, <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
-```
-
 ## Call the API
-We assume Acheron runs on port 8080. 
-
 Your accounts API is available via Acheron at http://localhost:8080/accounts. Since we have enabled OAuth2 and API Key auth, the API needs to be called with an API Key and an OAuth2 access token.
 
 ### Calling the API without an API Key

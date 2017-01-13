@@ -2,7 +2,7 @@ package com.dbg.cloud.acheron.filters.pre.authentication;
 
 import com.dbg.cloud.acheron.config.store.consumers.Consumer;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
-import com.dbg.cloud.acheron.plugins.apikey.APIKeyStore;
+import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

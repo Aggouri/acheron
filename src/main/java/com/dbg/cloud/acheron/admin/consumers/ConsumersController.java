@@ -4,6 +4,8 @@ import com.dbg.cloud.acheron.config.store.consumers.Consumer;
 import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
 import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
 import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
+import com.dbg.cloud.acheron.plugins.apikey.store.APIKey;
+import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ final class ConsumersController {
 
     private final ConsumerStore consumerStore;
     private final PluginConfigStore pluginConfigStore;
+    private final APIKeyStore apiKeyStore;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<ConsumerTO> readConsumers() {
@@ -61,9 +64,13 @@ final class ConsumersController {
 
         // Delete all plugin configs linked to the consumer
         final List<PluginConfig> consumerPluginConfigs = pluginConfigStore.findByConsumer(uuidConsumerId);
-
         consumerPluginConfigs.forEach(
                 consumerPluginConfig -> pluginConfigStore.deleteById(consumerPluginConfig.getId()));
+
+        // Delete API Keys
+        final List<APIKey> consumerAPIKeys = apiKeyStore.findByConsumer(uuidConsumerId);
+        consumerAPIKeys.forEach(
+                consumerAPIKey -> apiKeyStore.deleteById(consumerAPIKey.getId()));
 
         return ResponseEntity.noContent().build();
     }
