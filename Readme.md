@@ -24,9 +24,7 @@ One can see filters as plugins working together to handle HTTP requests and resp
 - Response Transformation
 
 ## Configuration Store
-The route configuration is stored in Apache Cassandra.
-
-An admin API is in the works. Currently, you have to execute some CQL statements yourself.
+The configuration is stored in Apache Cassandra. A non-secure and basic admin REST API is available for most configuration operations. Nevertheless, you may have to execute some CQL statements yourself.
 
 ## OAuth2
 The OAuth2 plugin uses Hydra, a lightweight, scalable and cloud native OAuth2 authorisation server (from ORY).
@@ -67,99 +65,33 @@ $ SYSTEM_SECRET=awesomesecretthatislongenoughtonotbeignored docker-compose start
 
 # 4. Initial Configuration
 ## Acheron Configuration
-Acheron stores configuration in Apache Cassandra. Currently, the store is not automatically created, so you need to do it yourself, using the instructions in this section.
+Acheron stores configuration in Apache Cassandra. To create the store, simply run the following command in the project's root:
 
-Connect to Cassandra:
 ```
-$ docker exec -it acheron_cassandra /bin/bash
-```
-
-Connect to cqlsh:
-```
-$ cqlsh
+$ docker exec acheron_cassandra cqlsh --request-timeout=3600 -e "$(cat ddl/cassandra/ddl.cql)"
 ```
 
-Create the routing and plugin config tables:
+Add the Hydra route via the ```/admin/routes``` endpoint, making sure you replace the URLs should you have a different set up:
 ```
-CREATE KEYSPACE IF NOT EXISTS acheron WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
-
-USE acheron;
-
-CREATE TABLE consumers (
-    id uuid,
-    name text,
-    created_at timestamp,
-    PRIMARY KEY(id, name)
-) WITH CLUSTERING ORDER BY (name ASC);
-
-CREATE TABLE routes (
-    id text,
-    http_methods Set<text>,
-    path text,
-    service_id text,
-    url text,
-    keep_prefix boolean,
-    retryable boolean,
-    override_sensitive_headers boolean,
-    sensitive_headers Set<text>,
-    created_at timestamp,
-    PRIMARY KEY(id)
-);
-
-CREATE TABLE plugins (
-    id uuid,
-    name text,
-    route_id text,
-    consumer_id uuid,
-    http_methods Set<text>,
-    config text,
-    enabled boolean,
-    created_at timestamp,
-    PRIMARY KEY (id, name)
-) WITH CLUSTERING ORDER BY (name ASC);
-
-CREATE INDEX plugins_route_id_idx ON plugins (route_id);
-CREATE INDEX plugins_consumer_id_idx ON plugins (consumer_id);
-CREATE INDEX plugins_name_idx ON plugins (name);
-
-CREATE TABLE api_key_keys (
-    id uuid,
-    api_key text,
-    consumer_id uuid,
-    consumer_name text,
-    consumer_created_at timestamp,
-    created_at timestamp,
-    PRIMARY KEY(id)
-);
-
-CREATE INDEX api_key_keys_api_key_idx ON api_key_keys (api_key);
-CREATE INDEX api_key_keys_consumer_id_idx ON api_key_keys (consumer_id);
-
-CREATE TABLE oauth2_clients (
-    id uuid,
-    client_id uuid,
-    consumer_id uuid,
-    consumer_name text,
-    consumer_created_at timestamp,
-    created_at timestamp,
-    PRIMARY KEY(id)
-);
-
-CREATE INDEX oauth2_clients_client_id_idx ON oauth2_clients (client_id);
-
-CREATE INDEX oauth2_clients_consumer_id_idx ON oauth2_clients (consumer_id);
-```
-
-Insert the Hydra route:
-```
-INSERT INTO routes (id, http_methods, path, service_id, url, override_sensitive_headers, sensitive_headers, created_at) 
-     VALUES ('hydra_realm1', {'POST'}, '/hydra/realm1/**', 'hydra_realm1', 'http://localhost:4444', true, {}, dateOf(now()));
+$ curl -X POST -H "Content-Type: application/json" -d '{
+    "id": "hydra_realm1",
+    "http_methods": [
+      "POST"
+    ],
+    "path": "/hydra/realm1/**",
+    "service_id": "hydra_realm1",
+    "url": "http://localhost:4444",
+    "keep_prefix": false,
+    "retryable": false,
+    "override_sensitive_headers": true,
+    "sensitive_headers": []
+}' "http://localhost:8080/admin/routes"
 ```
 
 ## Hydra Configuration
 You need to create an OAuth2 client to allow Acheron to make requests to Hydra.
 
-Connect to hydra:
+Connect to Hydra:
 ```
 $ docker exec -i -t hydra_hydra_1 /bin/bash
 ```
@@ -266,9 +198,14 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
 Creating an OAuth2 client will be automated via the REST Admin API at a later date. Right now, we have to register the client ID in Cassandra and link it to the consumer. Replace ```<client_id>``` with the client ID returned in the previous step, then ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following statement in Cassandra:
 
 ```
-INSERT INTO oauth2_clients (id, client_id, consumer_id, consumer_name, consumer_created_at, created_at)
+INSERT INTO acheron.oauth2_clients (id, client_id, consumer_id, consumer_name, consumer_created_at, created_at)
      VALUES (uuid(), <client_id>, <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
 ```
+
+> To connect to Cassandra, you need to execute ```docker exec -it acheron_cassandra /bin/bash```. Then, inside the container run ```cqlsh```.
+
+## Restart Acheron
+For the new routes to be taken into consideration, you need to restart Acheron. This limitation will be removed at a later date.
 
 ## Call the API
 Your accounts API is available via Acheron at http://localhost:8080/accounts. Since we have enabled OAuth2 and API Key auth, the API needs to be called with an API Key and an OAuth2 access token.
