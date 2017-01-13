@@ -88,6 +88,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
 }' "http://localhost:8080/admin/routes"
 ```
 
+> At the moment, route changes are taken only for the Acheron instance that processes the configuration request. As a result, if you run multiple Acheron instances in front of a load balancer, you should refresh the routes manually. There are two ways to refresh the routes:
+> - Restart all Acheron instances
+> - Call the ```/routes``` endpoint (POST request) on all Acheron instances (e.g. ```curl -X POST "http://localhost:8080/routes"```)
+>
+> When things are done properly, there will either be a message bus or some inter-instance communication paradigm that will remove the need for this manual step.
+
 ## Hydra Configuration
 You need to create an OAuth2 client to allow Acheron to make requests to Hydra.
 
@@ -203,9 +209,6 @@ INSERT INTO acheron.oauth2_clients (id, client_id, consumer_id, consumer_name, c
 ```
 
 > To connect to Cassandra, you need to execute ```docker exec -it acheron_cassandra /bin/bash```. Then, inside the container run ```cqlsh```.
-
-## Restart Acheron
-For the new routes to be taken into consideration, you need to restart Acheron. This limitation will be removed at a later date.
 
 ## Call the API
 Your accounts API is available via Acheron at http://localhost:8080/accounts. Since we have enabled OAuth2 and API Key auth, the API needs to be called with an API Key and an OAuth2 access token.

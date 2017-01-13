@@ -6,6 +6,7 @@ import com.dbg.cloud.acheron.config.store.routing.RouteStore;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.netflix.zuul.web.ZuulHandlerMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ final class RoutesController {
 
     private final RouteStore routeStore;
     private final PluginConfigStore pluginConfigStore;
+    private final ZuulHandlerMapping zuulHandlerMapping;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<RouteTO> readRoutes() {
@@ -45,18 +47,22 @@ final class RoutesController {
             return ResponseEntity.badRequest().build();
         }
 
+        final Route addedRoute = routeStore.add(new Route.ForCreation(
+                route.getId(),
+                route.getHttpMethods(),
+                route.getPath(),
+                route.getServiceId(),
+                route.getUrl(),
+                route.isKeepPrefix(),
+                route.isRetryable(),
+                route.isOverrideSensitiveHeaders(),
+                route.getSensitiveHeaders()));
+
+        refreshRoutes();
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(routeStore.add(new Route.ForCreation(
-                        route.getId(),
-                        route.getHttpMethods(),
-                        route.getPath(),
-                        route.getServiceId(),
-                        route.getUrl(),
-                        route.isKeepPrefix(),
-                        route.isRetryable(),
-                        route.isOverrideSensitiveHeaders(),
-                        route.getSensitiveHeaders())));
+                .body(addedRoute);
     }
 
     @RequestMapping(value = "/{routeId}", method = RequestMethod.DELETE)
@@ -65,6 +71,8 @@ final class RoutesController {
             throw new RouteNotFoundException(routeId);
         }
         routeStore.deleteById(routeId);
+
+        refreshRoutes();
 
         // FIXME: This is not sustainable. Come up with an event-based model (event bus, publish/subscribe, whatever)
         pluginConfigStore.findByRoute(routeId).stream().forEach(
@@ -77,9 +85,13 @@ final class RoutesController {
         return route.getId() != null && !route.getId().isEmpty() &&
                 // either service id or url must be given
                 ((route.getServiceId() != null && !route.getServiceId().isEmpty()) ||
-                        (route.getUrl() != null && !route.getUrl().isEmpty())
-                ) &&
+                        (route.getUrl() != null && !route.getUrl().isEmpty())) &&
                 route.getPath() != null && !route.getPath().isEmpty();
+    }
+
+    private void refreshRoutes() {
+        // FIXME: Use something that works with multiple instances
+        zuulHandlerMapping.setDirty(true);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
