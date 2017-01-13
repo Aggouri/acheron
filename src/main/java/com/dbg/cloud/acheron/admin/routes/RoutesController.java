@@ -1,5 +1,6 @@
 package com.dbg.cloud.acheron.admin.routes;
 
+import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
 import com.dbg.cloud.acheron.config.store.routing.Route;
 import com.dbg.cloud.acheron.config.store.routing.RouteStore;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 final class RoutesController {
 
     private final RouteStore routeStore;
+    private final PluginConfigStore pluginConfigStore;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<RouteTO> readRoutes() {
@@ -63,6 +65,10 @@ final class RoutesController {
             throw new RouteNotFoundException(routeId);
         }
         routeStore.deleteById(routeId);
+
+        // FIXME: This is not sustainable. Come up with an event-based model (event bus, publish/subscribe, whatever)
+        pluginConfigStore.findByRoute(routeId).stream().forEach(
+                pluginConfig -> pluginConfigStore.deleteById(pluginConfig.getId()));
 
         return ResponseEntity.noContent().build();
     }
