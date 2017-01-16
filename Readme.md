@@ -80,7 +80,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
     ],
     "path": "/hydra/realm1/**",
     "service_id": "hydra_realm1",
-    "url": "http://localhost:4444",
+    "url": "http://localhost:4444/oauth2",
     "keep_prefix": false,
     "retryable": false,
     "override_sensitive_headers": true,
@@ -106,12 +106,21 @@ Create the Acheron client:
 ```
 $ hydra clients create -n "acheron" \
 -g client_credentials \
--r token
+-r token \
+-a hydra.clients
 
-Client ID: 7f15f8b8-98d5-4d25-bb1b-d45614766e03
-Client Secret: YCWwEAqnogn(O0uBFrqh$_9hsR
+Client ID: 991635e3-c17a-4960-90f1-9908d4a8b333
+Client Secret: ihLMuaB59cGkAqqD,pxKd&4LBL
 ```
 The client ID and client secret need to be exported as environment variables prior to running Acheron. See the instructions for running Acheron.
+
+Create a policy that gives the permission to Acheron to create OAuth2 clients. Replace ```<client_id>``` with the client ID obtained in the previous step:
+```
+$ hydra policies create --allow \
+-a "create,delete" \
+-r "rn:hydra:clients,rn:hydra:clients:<.*>" \
+-s "<client_id>"
+```
 
 # 5. Play
 This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and you have an API running at ```http://localhost:10000/accounts```.
@@ -205,7 +214,7 @@ Creating an OAuth2 client will be automated via the REST Admin API at a later da
 
 ```
 INSERT INTO acheron.oauth2_clients (id, client_id, consumer_id, consumer_name, consumer_created_at, created_at)
-     VALUES (uuid(), <client_id>, <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
+     VALUES (uuid(), '<client_id>', <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
 ```
 
 > To connect to Cassandra, you need to execute ```docker exec -it acheron_cassandra /bin/bash```. Then, inside the container run ```cqlsh```.

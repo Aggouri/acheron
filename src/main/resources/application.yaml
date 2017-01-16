@@ -40,8 +40,8 @@ cassandra:
   port: 9042
 
 # Pass your own environment variables
-#   OAUTH2_CLIENT_ID=7f15f8b8-98d5-4d25-bb1b-d45614766e03
-#   OAUTH2_CLIENT_SECRET=YCWwEAqnogn(O0uBFrqh$_9hsR
+#   OAUTH2_CLIENT_ID=991635e3-c17a-4960-90f1-9908d4a8b333
+#   OAUTH2_CLIENT_SECRET=ihLMuaB59cGkAqqD,pxKd&4LBL
 oauth2:
-  client_id: 7f15f8b8-98d5-4d25-bb1b-d45614766e03
-  client_secret: YCWwEAqnogn(O0uBFrqh$_9hsR
+  client_id: 991635e3-c17a-4960-90f1-9908d4a8b333
+  client_secret: ihLMuaB59cGkAqqD,pxKd&4LBL

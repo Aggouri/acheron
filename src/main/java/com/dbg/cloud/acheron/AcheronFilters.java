@@ -5,12 +5,13 @@ import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
 import com.dbg.cloud.acheron.config.store.routing.RouteStore;
 import com.dbg.cloud.acheron.filters.pre.authentication.APIKeyFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.ConsumerAPIConfigFilter;
-import com.dbg.cloud.acheron.filters.pre.authentication.oauth2.OAuth2Filter;
+import com.dbg.cloud.acheron.filters.pre.authentication.OAuth2Filter;
 import com.dbg.cloud.acheron.filters.pre.authorization.ACLFilter;
 import com.dbg.cloud.acheron.filters.pre.edge.*;
 import com.dbg.cloud.acheron.filters.pre.transformation.CorrelationIDFilter;
 import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
-import com.dbg.cloud.acheron.plugins.oauth2.OAuth2Store;
+import com.dbg.cloud.acheron.plugins.oauth2.OAuth2ServerProvider;
+import com.dbg.cloud.acheron.plugins.oauth2.store.OAuth2Store;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.netflix.zuul.filters.RouteLocator;
 import org.springframework.context.annotation.Bean;
@@ -19,12 +20,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties(value = OAuth2Properties.class)
 public class AcheronFilters {
-
-    private final OAuth2Properties oAuth2Properties;
-
-    public AcheronFilters(OAuth2Properties oAuth2Properties) {
-        this.oAuth2Properties = oAuth2Properties;
-    }
 
     @Bean
     public LogPreFilter logPreFilter() {
@@ -57,9 +52,8 @@ public class AcheronFilters {
     }
 
     @Bean
-    public OAuth2Filter oAuth2Filter(RouteLocator routeLocator, OAuth2Store oAuth2Store) {
-        return new OAuth2Filter(routeLocator, oAuth2Store, oAuth2Properties.getClientId(),
-                oAuth2Properties.getClientSecret());
+    public OAuth2Filter oAuth2Filter(OAuth2ServerProvider oAuth2ServerProvider, OAuth2Store oAuth2Store) {
+        return new OAuth2Filter(oAuth2ServerProvider, oAuth2Store);
     }
 
     @Bean

@@ -56,7 +56,7 @@ CREATE INDEX api_key_keys_consumer_id_idx ON api_key_keys (consumer_id);
 
 CREATE TABLE oauth2_clients (
     id uuid,
-    client_id uuid,
+    client_id text,
     consumer_id uuid,
     consumer_name text,
     consumer_created_at timestamp,
