@@ -80,7 +80,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
     ],
     "path": "/hydra/realm1/**",
     "service_id": "hydra_realm1",
-    "url": "http://localhost:4444/oauth2",
+    "url": "http://localhost:4444",
     "keep_prefix": false,
     "retryable": false,
     "override_sensitive_headers": true,
@@ -131,9 +131,7 @@ First, we are going to create the "accounts" route and enable the following plug
 - API Key auth
 - OAuth2
 
-This set up effectively means that in order to call the API we need to provide an API Key and an OAuth2 access token. 
-
-> Since some of the REST administration endpoints are not yet there, we need to execute a part of the configuration steps manually, via cqlsh in Cassandra and the hydra CLI in Hydra.
+This set up effectively means that in order to call the API we need to provide an API Key and an OAuth2 access token.
 
 ### Create the route
 Execute the following request on the ```/admin/routes``` endpoint. This creates a new route.
@@ -184,20 +182,6 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
 ```
 Take a note of the returned Consumer ID (```id``` column of the returned JSON). You will use it to map the OAuth2 credentials to the consumer.
 
-### Create an OAuth2 client
-To make calls to an OAuth2-protected API, you need to create an OAuth2 client with at least a scope that is equal to the route name, i.e. scopes must contain 'accounts'. This will probably change at a later date, when we get the concepts right.
-
-```
-$ docker exec -i -t hydra_hydra_1 /bin/bash
-$ hydra clients create -n "dbp-client" \
--a hydra.keys.get,accounts \
--c https://www.getpostman.com/oauth2/callback \
--g authorization_code,client_credentials \
--r token,code
-```
-
-Take a note of the returned client ID and client secret. They are used in the next section.
-
 ### Generate/Register API key in Acheron
 To make calls with an API key, a consumer needs to have one. Replace ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following request against the ```/admin/consumers/<consumer_id>/api-keys``` endpoint:
 
@@ -210,14 +194,17 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
 > Here we are forcing the API Key to be a specific string. Normally, you would let Acheron generate one for you.
 
 ### Register OAuth2 client in Acheron
-Creating an OAuth2 client will be automated via the REST Admin API at a later date. Right now, we have to register the client ID in Cassandra and link it to the consumer. Replace ```<client_id>``` with the client ID returned in the previous step, then ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following statement in Cassandra:
+To make calls to an OAuth2-protected API, you need to create an OAuth2 client with at least a scope that is equal to the route name, i.e. scopes must contain 'accounts'. This will probably change at a later date, when we get the concepts right.
 
+Replace ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following request against the ```/admin/consumers/<consumer_id>/oauth2-clients``` endpoint:
 ```
-INSERT INTO acheron.oauth2_clients (id, client_id, consumer_id, consumer_name, consumer_created_at, created_at)
-     VALUES (uuid(), '<client_id>', <consumer_id>, 'Awesome Consumer', dateOf(now()), dateOf(now()));
+$ curl -X POST -H "Content-Type: application/json" -d '{
+	"scope": "accounts",
+	"grant_types": ["client_credentials", "authorization_code"]
+}' "http://localhost:8080/admin/consumers/<consumer_id>/oauth2-clients"
 ```
 
-> To connect to Cassandra, you need to execute ```docker exec -it acheron_cassandra /bin/bash```. Then, inside the container run ```cqlsh```.
+Take a note of the returned client ID and client secret. They are used in the next section.
 
 ## Call the API
 Your accounts API is available via Acheron at http://localhost:8080/accounts. Since we have enabled OAuth2 and API Key auth, the API needs to be called with an API Key and an OAuth2 access token.
