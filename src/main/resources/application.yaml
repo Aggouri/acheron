@@ -1,19 +1,5 @@
 zuul:
   ignored-services: "*"
-  routes:
-    # Can be overwritten by Cassandra config
-    hydra_realm1:
-      path: /hydra/realm1/**
-      url: http://localhost:4444
-#      # Spring Boot strips some sensitive headers by default (Authorization is one of them)
-#      # Disable the blacklist
-      sensitiveHeaders:
-#    balances:
-#      path: /balances/**
-#      url: http://localhost:10000/balances
-#    accounts:
-#      path: /accounts/**
-#      url: http://localhost:10000/accounts
 ribbon:
   eureka:
     enabled: false
@@ -39,9 +25,22 @@ cassandra:
     - localhost
   port: 9042
 
+
 # Pass your own environment variables
 #   OAUTH2_CLIENT_ID=991635e3-c17a-4960-90f1-9908d4a8b333
 #   OAUTH2_CLIENT_SECRET=ihLMuaB59cGkAqqD,pxKd&4LBL
 oauth2:
   client_id: 991635e3-c17a-4960-90f1-9908d4a8b333
   client_secret: ihLMuaB59cGkAqqD,pxKd&4LBL
+
+spring:
+  application:
+    name: Acheron
+  cloud:
+    bus:
+      enabled: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest

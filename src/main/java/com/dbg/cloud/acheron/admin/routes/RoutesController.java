@@ -1,12 +1,12 @@
 package com.dbg.cloud.acheron.admin.routes;
 
+import com.dbg.cloud.acheron.cluster.ClusterEventBus;
 import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
 import com.dbg.cloud.acheron.config.store.routing.Route;
 import com.dbg.cloud.acheron.config.store.routing.RouteStore;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.netflix.zuul.web.ZuulHandlerMapping;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +23,7 @@ final class RoutesController {
 
     private final RouteStore routeStore;
     private final PluginConfigStore pluginConfigStore;
-    private final ZuulHandlerMapping zuulHandlerMapping;
+    private final ClusterEventBus bus;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<RouteTO> readRoutes() {
@@ -90,8 +90,7 @@ final class RoutesController {
     }
 
     private void refreshRoutes() {
-        // FIXME: Use something that works with multiple instances
-        zuulHandlerMapping.setDirty(true);
+        bus.refreshRoutes();
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)

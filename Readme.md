@@ -26,13 +26,16 @@ One can see filters as plugins working together to handle HTTP requests and resp
 ## Configuration Store
 The configuration is stored in Apache Cassandra. A non-secure and basic admin REST API is available for most configuration operations. Nevertheless, you may have to execute some CQL statements yourself.
 
+## Message Broker
+Acheron instances communicate with each other through a RabbitMQ message broker. The message broker is required when scaling Acheron instances up.
+
 ## OAuth2
 The OAuth2 plugin uses Hydra, a lightweight, scalable and cloud native OAuth2 authorisation server (from ORY).
 
-# 3. Running Acheron, Cassandra and Hydra
+# 3. Running Acheron, Cassandra, RabbitMQ and Hydra
 This is a very crude set of commands that kinda gives an idea of what is required to run the whole thing. This section will be updated later, when the project has progressed.
 
-## Acheron
+## Running Acheron
 To run Acheron, please clone the repo and either use your IDE or run ```./mvnw spring-boot:run```.
 
 You need to export the following enviornment variables, the values of which you get from Hydra. See the configuration section below.
@@ -47,12 +50,19 @@ By default, Acheron runs on port 8080, but you can change this by exporting the 
 SERVER_PORT=9000 ./mvnw spring-boot:run
 ```
 
-## Cassandra
+If you want to run a single instance, you can export ```SPRING_CLOUD_BUS_ENABLED=false``` to remove the need for the broker. In that case, do not run RabbitMQ.
+
+## Running Cassandra
 ```
 $ docker run --name acheron_cassandra -p 9042:9042 -d cassandra:3.9
 ```
 
-## Hydra
+## Running RabbitMQ
+```
+docker run -d --hostname acheron_rabbit_1 --name acheron_rabbit -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+```
+
+## Running Hydra
 First time:
 ```
 $ SYSTEM_SECRET=awesomesecretthatislongenoughtonotbeignored docker-compose up
@@ -87,12 +97,6 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
     "sensitive_headers": []
 }' "http://localhost:8080/admin/routes"
 ```
-
-> At the moment, route changes are taken only for the Acheron instance that processes the configuration request. As a result, if you run multiple Acheron instances in front of a load balancer, you should refresh the routes manually. There are two ways to refresh the routes:
-> - Restart all Acheron instances
-> - Call the ```/routes``` endpoint (POST request) on all Acheron instances (e.g. ```curl -X POST "http://localhost:8080/routes"```)
->
-> When things are done properly, there will either be a message bus or some inter-instance communication paradigm that will remove the need for this manual step.
 
 ## Hydra Configuration
 You need to create an OAuth2 client to allow Acheron to make requests to Hydra.
