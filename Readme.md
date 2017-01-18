@@ -243,3 +243,6 @@ The access token above can then be used to make a successful call to the API.
 ```
 $ curl -X GET -H "Authorization: Bearer YIoXNgdA3aKkkyNz1Q69mQN7-ftVsOsstVbekdY1Oj4.dCtHcIfmvGlxtfuwxExvAfnspK8qzkr198fGXh2tPew" -H "API_KEY: SECRET_7881b8d6-36d3-4360-b38b-a4f4ee96b1f1" "http://localhost:8080/accounts"
 ```
+
+# 6. Documentation
+Check the [Wiki](https://github.com/Aggouri/acheron/wiki).
