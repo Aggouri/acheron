@@ -1,4 +1,4 @@
-package com.dbg.cloud;
+package com.dbg.cloud.acheron;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

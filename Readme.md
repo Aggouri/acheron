@@ -73,7 +73,18 @@ From then on:
 $ SYSTEM_SECRET=awesomesecretthatislongenoughtonotbeignored docker-compose start
 ```
 
-# 4. Initial Configuration
+# 4. Building Acheron
+To build Acheron, you can run the following command:
+```
+$ ./mvnw package
+```
+
+If you want to build a Docker image, you can do so using the following command:
+```
+$ ./mvnw package docker:build
+```
+
+# 5. Initial Configuration
 ## Acheron Configuration
 Acheron stores configuration in Apache Cassandra. To create the store, simply run the following command in the project's root:
 
@@ -126,7 +137,7 @@ $ hydra policies create --allow \
 -s "<client_id>"
 ```
 
-# 5. Play
+# 6. Play
 This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and you have an API running at ```http://localhost:10000/accounts```.
 
 ## Preparation
@@ -244,5 +255,5 @@ The access token above can then be used to make a successful call to the API.
 $ curl -X GET -H "Authorization: Bearer YIoXNgdA3aKkkyNz1Q69mQN7-ftVsOsstVbekdY1Oj4.dCtHcIfmvGlxtfuwxExvAfnspK8qzkr198fGXh2tPew" -H "API_KEY: SECRET_7881b8d6-36d3-4360-b38b-a4f4ee96b1f1" "http://localhost:8080/accounts"
 ```
 
-# 6. Documentation
+# 7. Documentation
 Check the [Wiki](https://github.com/Aggouri/acheron/wiki).
