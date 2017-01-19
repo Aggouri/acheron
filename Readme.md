@@ -32,46 +32,15 @@ Acheron instances communicate with each other through a RabbitMQ message broker.
 ## OAuth2
 The OAuth2 plugin uses Hydra, a lightweight, scalable and cloud native OAuth2 authorisation server (from ORY).
 
-# 3. Running Acheron, Cassandra, RabbitMQ and Hydra
-This is a very crude set of commands that kinda gives an idea of what is required to run the whole thing. This section will be updated later, when the project has progressed.
-
-## Running Acheron
-To run Acheron, please clone the repo and either use your IDE or run ```./mvnw spring-boot:run```.
-
-You need to export the following enviornment variables, the values of which you get from Hydra. See the configuration section below.
-```
-OAUTH2_CLIENT_ID=7f15f8b8-98d5-4d25-bb1b-d45614766e03
-OAUTH2_CLIENT_SECRET=YCWwEAqnogn(O0uBFrqh$_9hsR
-```
-
-By default, Acheron runs on port 8080, but you can change this by exporting the ```SERVER_PORT``` environment variable, e.g.:
+# 3. Getting Started
+If you want to start playing immediately, it is recommended that you use a pre-configured environment that is set up through Docker Compose. To do so, you just need to execute the following commands in the project's root:
 
 ```
-SERVER_PORT=9000 ./mvnw spring-boot:run
+$ ./mvnw package docker:build -DskipTests
+$ docker-compose up --build
 ```
 
-If you want to run a single instance, you can export ```SPRING_CLOUD_BUS_ENABLED=false``` to remove the need for the broker. In that case, do not run RabbitMQ.
-
-## Running Cassandra
-```
-$ docker run --name acheron_cassandra -p 9042:9042 -d cassandra:3.9
-```
-
-## Running RabbitMQ
-```
-docker run -d --hostname acheron_rabbit_1 --name acheron_rabbit -p 5672:5672 -p 15672:15672 rabbitmq:3-management
-```
-
-## Running Hydra
-First time:
-```
-$ SYSTEM_SECRET=awesomesecretthatislongenoughtonotbeignored docker-compose up
-```
-
-From then on:
-```
-$ SYSTEM_SECRET=awesomesecretthatislongenoughtonotbeignored docker-compose start
-```
+Acheron runs on [http://localhost:8080](http://localhost:8080). Skip to section *Play* for a short tutorial.
 
 # 4. Building Acheron
 To build Acheron, you can run the following command:
@@ -79,66 +48,18 @@ To build Acheron, you can run the following command:
 $ ./mvnw package
 ```
 
-If you want to build a Docker image, you can do so using the following command:
+If you want to build the Docker image, you can do so using the following command:
 ```
 $ ./mvnw package docker:build
 ```
 
-# 5. Initial Configuration
-## Acheron Configuration
-Acheron stores configuration in Apache Cassandra. To create the store, simply run the following command in the project's root:
-
-```
-$ docker exec acheron_cassandra cqlsh --request-timeout=3600 -e "$(cat ddl/cassandra/ddl.cql)"
-```
-
-Add the Hydra route via the ```/admin/routes``` endpoint, making sure you replace the URLs should you have a different set up:
-```
-$ curl -X POST -H "Content-Type: application/json" -d '{
-    "id": "hydra_realm1",
-    "http_methods": [
-      "POST"
-    ],
-    "path": "/hydra/realm1/**",
-    "service_id": "hydra_realm1",
-    "url": "http://localhost:4444",
-    "keep_prefix": false,
-    "retryable": false,
-    "override_sensitive_headers": true,
-    "sensitive_headers": []
-}' "http://localhost:8080/admin/routes"
-```
-
-## Hydra Configuration
-You need to create an OAuth2 client to allow Acheron to make requests to Hydra.
-
-Connect to Hydra:
-```
-$ docker exec -i -t hydra_hydra_1 /bin/bash
-```
-
-Create the Acheron client:
-```
-$ hydra clients create -n "acheron" \
--g client_credentials \
--r token \
--a hydra.clients
-
-Client ID: 991635e3-c17a-4960-90f1-9908d4a8b333
-Client Secret: ihLMuaB59cGkAqqD,pxKd&4LBL
-```
-The client ID and client secret need to be exported as environment variables prior to running Acheron. See the instructions for running Acheron.
-
-Create a policy that gives the permission to Acheron to create OAuth2 clients. Replace ```<client_id>``` with the client ID obtained in the previous step:
-```
-$ hydra policies create --allow \
--a "create,delete" \
--r "rn:hydra:clients,rn:hydra:clients:<.*>" \
--s "<client_id>"
-```
+# 5. Manual configuration
+Check the [docs](https://github.com/Aggouri/acheron/wiki/Manual-setup).
 
 # 6. Play
-This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and you have an API running at ```http://localhost:10000/accounts```.
+This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and you have an API running at ```http://localhost:10000/accounts```. 
+
+> Note that if you are using Docker, replace the API URL's ```localhost``` with your machine's IP address. Acheron running the container can access your API running locally **only through the machine's IP address**. In other words, in the following set of instructions, whenever you see ```http://localhost:10000```, please read ```http://<machine_ip>:10000```.
 
 ## Preparation
 First, we are going to create the "accounts" route and enable the following plugins for that route:
@@ -151,7 +72,7 @@ This set up effectively means that in order to call the API we need to provide a
 ### Create the route
 Execute the following request on the ```/admin/routes``` endpoint. This creates a new route.
 ```
-$ curl -X POST -H "Content-Type: application/json" -d '{
+$ curl -i -X POST -H "Content-Type: application/json" -d '{
     "id": "accounts",
     "http_methods": [
       "*"
@@ -170,7 +91,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
 Execute the following requests on the ```/admin/plugin-configs``` endpoint. This activates API Key auth and OAuth2 for the new route. 
 
 ```
-$ curl -X POST -H "Content-Type: application/json" -d '{
+$ curl -i -X POST -H "Content-Type: application/json" -d '{
 "name": "api_key",
 "route_id": "accounts",
 "http_methods": [
@@ -178,7 +99,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
  ]
 }' "http://localhost:8080/admin/plugin-configs"
 
-$ curl -X POST -H "Content-Type: application/json" -d '{
+$ curl -i -X POST -H "Content-Type: application/json" -d '{
 "name": "oauth2",
 "route_id": "accounts",
 "http_methods": [
@@ -191,7 +112,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{
 Execute the following request on the ```/admin/consumers``` endpoint. This creates a consumer, which represents the caller of the API:
 
 ```
-$ curl -X POST -H "Content-Type: application/json" -d '{
+$ curl -i -X POST -H "Content-Type: application/json" -d '{
 	"name": "Awesome Consumer"
 }' "http://localhost:8080/admin/consumers"
 ```
@@ -201,7 +122,7 @@ Take a note of the returned Consumer ID (```id``` column of the returned JSON). 
 To make calls with an API key, a consumer needs to have one. Replace ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following request against the ```/admin/consumers/<consumer_id>/api-keys``` endpoint:
 
 ```
-$ curl -X POST -H "Content-Type: application/json" -d '{
+$ curl -i -X POST -H "Content-Type: application/json" -d '{
 	"api_key": "faed995a-c797-479f-9352-a7b2bf1748ad"
 }' "http://localhost:8080/admin/consumers/<consumer_id>/api-keys"
 ```
@@ -213,7 +134,7 @@ To make calls to an OAuth2-protected API, you need to create an OAuth2 client wi
 
 Replace ```<consumer_id>``` with the consumer ID returned in the consumer creation step and execute the following request against the ```/admin/consumers/<consumer_id>/oauth2-clients``` endpoint:
 ```
-$ curl -X POST -H "Content-Type: application/json" -d '{
+$ curl -i -X POST -H "Content-Type: application/json" -d '{
 	"scope": "accounts",
 	"grant_types": ["client_credentials", "authorization_code"]
 }' "http://localhost:8080/admin/consumers/<consumer_id>/oauth2-clients"
@@ -234,7 +155,7 @@ $ curl -X GET http://localhost:8080/accounts
 ### Calling the API with an API Key
 Adding an API Key is a first step to the right direction, but since we don't have an OAuth2 access token, the following request will fail:
 ```
-$ curl -X GET -H "API_KEY: faed995a-c797-479f-9352-a7b2bf1748ad" "http://localhost:8080/accounts"
+$ curl -i -X GET -H "API_KEY: faed995a-c797-479f-9352-a7b2bf1748ad" "http://localhost:8080/accounts"
 { "error": "Invalid access token" }%
 ```
 
@@ -246,7 +167,7 @@ For simplicity, in this example, we are getting a bearer token via the OAuth2 cl
 You can use online tools such as https://www.base64encode.org in order to encode your own client ID and client secret.
 
 ```
-$ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Basic Nzg4MWI4ZDYtMzZkMy00MzYwLWIzOGItYTRmNGVlOTZiMWYxOlpwbyk8dmo0V1pFVi1rIUQvbE9YNXdxKEVw" -d 'grant_type=client_credentials&scope=accounts' "http://localhost:8080/hydra/realm1/oauth2/token"
+$ curl -i -X POST -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Basic Nzg4MWI4ZDYtMzZkMy00MzYwLWIzOGItYTRmNGVlOTZiMWYxOlpwbyk8dmo0V1pFVi1rIUQvbE9YNXdxKEVw" -d 'grant_type=client_credentials&scope=accounts' "http://localhost:8080/hydra/realm1/oauth2/token"
 {"access_token":"YIoXNgdA3aKkkyNz1Q69mQN7-ftVsOsstVbekdY1Oj4.dCtHcIfmvGlxtfuwxExvAfnspK8qzkr198fGXh2tPew","expires_in":"3599","scope":"accounts","token_type":"bearer"}%  
 ```
 

@@ -1,0 +1,114 @@
+version: '2'
+
+services:
+  hydra:
+    image: oryam/hydra:latest
+    links:
+      - postgresd:postgresd
+    volumes:
+      - hydravolume:/root
+    ports:
+      - "4444:4444"
+      - "4445:4445"
+    environment:
+      - TZ
+      - LOG_LEVEL
+      - SYSTEM_SECRET=awesomesecretthatislongenoughtonotbeignored
+      - CONSENT_URL
+      - DATABASE_URL=postgres://postgres:secret@postgresd:5432/postgres?sslmode=disable
+      - FORCE_ROOT_CLIENT_CREDENTIALS=admin:demo-password
+      - ACCESS_TOKEN_LIFESPAN
+      - ID_TOKEN_LIFESPAN
+      - AUTHORIZE_CODE_LIFESPAN
+    entrypoint: /go/bin/hydra host --dangerous-auto-logon --dangerous-force-http
+  postgresd:
+    image: postgres:9.6
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+  db:
+    image: cassandra:3.9
+    ports:
+      - "9042:9042"
+  db-ddl:
+    build: ./src/main/db/cassandra
+    links:
+      - db:db
+    command: >
+      /bin/bash -c "
+        if [ ! -f ddl_ran ]; then
+          while ! nc -z db 9042;
+          do
+            echo DB is not ready to accept connections. Sleeping.;
+            sleep 1;
+          done;
+          cqlsh db --request-timeout=3600 -f ddl.cql;
+          touch ddl_ran;
+        else
+          echo DDL ran previously. Skipping.;
+        fi
+      "
+  bus:
+    image: rabbitmq:3-management
+    hostname: acheron_rabbit_1
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  acheron:
+    image: dbg/acheron:latest
+    links:
+      - db:db
+      - hydra:hydra
+      - bus:bus
+    ports:
+      - "8080:8080"
+    environment:
+      - OAUTH2_CLIENT_ID=acheron
+      - OAUTH2_CLIENT_SECRET=secret
+      - CASSANDRA_CONTACT_POINTS[0]=db
+      - CASSANDRA_PORT=9042
+      - SPRING_RABBITMQ_HOST=bus
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      - db-ddl
+  acheron-demo-config:
+    build: ./demo
+    links:
+      - hydra:hydra
+      - acheron:acheron
+    environment:
+      - HYDRA_HOST=hydra
+      - HYDRA_PORT=4444
+      - ACHERON_HOST=acheron
+      - ACHERON_PORT=8080
+      - ADMIN_AUTH_CREDENTIALS=YWRtaW46ZGVtby1wYXNzd29yZA==
+    command: >
+      /bin/bash -c "
+        if [ ! -f acheron_demo_config_ran ]; then
+          while ! nmap -oX - -p 4444 hydra | xmllint --xpath '//nmaprun//ports/port[@portid=\"4444\"]/state[@state=\"open\"]' -;
+          do
+            echo Hydra is not ready to accept connections. Sleeping.;
+            sleep 1;
+          done;
+          while ! nmap -oX - -p 8080 acheron | xmllint --xpath '//nmaprun//ports/port[@portid=\"8080\"]/state[@state=\"open\"]' -;
+          do
+            echo Acheron is not ready to accept connections. Sleeping.;
+            sleep 5;
+          done;
+          sh setupDemo.sh
+          retval=$$?
+          if [ $$retval -ne 0 ]; then
+            exit $$retval;
+          fi
+          touch acheron_demo_config_ran;
+        else
+          echo Demo config ran previously. Skipping.;
+        fi
+      "
+volumes:
+  hydravolume:
+    driver: local

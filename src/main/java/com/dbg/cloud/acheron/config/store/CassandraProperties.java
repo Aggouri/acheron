@@ -14,4 +14,6 @@ public class CassandraProperties {
 
     private List<InetAddress> contactPoints;
     private Integer port;
+    private Integer initialConnectionRetryCount;
+    private Integer waitTimeBeforeRetriesInSec;
 }

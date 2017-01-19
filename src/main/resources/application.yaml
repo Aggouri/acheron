@@ -20,10 +20,11 @@ store:
 #   CASSANDRA_CONTACT_POINTS[1]=localhost
 #   CASSANDRA_PORT=9042
 cassandra:
-  contactPoints:
-    - 127.0.0.1
+  contact-points:
     - localhost
   port: 9042
+  initial-connection-retry-count: 25
+  wait-time-before-retries-in-sec: 4
 
 
 # Pass your own environment variables
