@@ -59,7 +59,7 @@ Check the [docs](https://github.com/Aggouri/acheron/wiki/Manual-setup).
 # 6. Play
 This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and you have an API running at ```http://localhost:10000/accounts```. 
 
-> Note that if you are using Docker, replace the API URL's ```localhost``` with your machine's IP address. Acheron running the container can access your API running locally **only through the machine's IP address**. In other words, in the following set of instructions, whenever you see ```http://localhost:10000```, please read ```http://<machine_ip>:10000```.
+> Note that if you are using Docker, replace the API URL's ```localhost``` with your machine's IP address. Acheron running in the container can access your API running locally **only through the machine's IP address**. In other words, in the following set of instructions, whenever you see ```http://localhost:10000```, please read ```http://<machine_ip>:10000```.
 
 ## Preparation
 First, we are going to create the "accounts" route and enable the following plugins for that route:
