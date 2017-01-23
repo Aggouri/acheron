@@ -23,6 +23,8 @@ One can see filters as plugins working together to handle HTTP requests and resp
 - Request Transformation (e.g. Correlation ID plugin)
 - Response Transformation
 
+![Acheron filter image](docs/readme/images/acheron-filters-image.png)
+
 ## Configuration Store
 The configuration is stored in Apache Cassandra. A non-secure and basic admin REST API is available for most configuration operations. Nevertheless, you may have to execute some CQL statements yourself.
 
