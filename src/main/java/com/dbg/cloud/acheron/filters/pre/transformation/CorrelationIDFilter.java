@@ -17,7 +17,7 @@ import java.util.UUID;
 public final class CorrelationIDFilter extends PreFilter {
     @Override
     public int filterOrder() {
-        return 50;
+        return 60;
     }
 
     @Override

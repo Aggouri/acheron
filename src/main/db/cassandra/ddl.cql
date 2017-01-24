@@ -67,3 +67,18 @@ CREATE TABLE oauth2_clients (
 CREATE INDEX oauth2_clients_client_id_idx ON oauth2_clients (client_id);
 
 CREATE INDEX oauth2_clients_consumer_id_idx ON oauth2_clients (consumer_id);
+
+CREATE TABLE rate_limiting_route_requests (
+    route_id text,
+	created_at timeuuid,
+	PRIMARY KEY(route_id, created_at)
+);
+
+CREATE TABLE rate_limiting_consumer_route_requests (
+    route_id text,
+	created_at timeuuid,
+	consumer_id uuid,
+	PRIMARY KEY(route_id, created_at)
+);
+
+CREATE INDEX rate_limiting_requests_consumer_id_idx ON rate_limiting_consumer_route_requests (consumer_id);

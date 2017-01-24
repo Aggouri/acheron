@@ -8,9 +8,7 @@ import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +17,10 @@ import java.util.stream.Collectors;
  */
 @AllArgsConstructor
 public class ConsumerAPIConfigFilter extends PreFilter {
+
+    // These plugins can not only be configured per route and per consumer but they can also simultaneously apply
+    // in the context of the same request.
+    private final static Collection<String> PLUGINS_SUPPORTING_SIMULTANEOUS_CONFIGS = Arrays.asList("rate_limiting");
 
     private final PluginConfigStore configStore;
 
@@ -42,7 +44,19 @@ public class ConsumerAPIConfigFilter extends PreFilter {
                 .collect(Collectors.toList());
 
         enabledPlugins.forEach(pluginConfig -> {
+            final String prefix;
+
             context.set("plugins." + pluginConfig.getName() + ".enabled");
+
+            if (PLUGINS_SUPPORTING_SIMULTANEOUS_CONFIGS.contains(pluginConfig.getName())) {
+                // Do not overwrite any route config, since this plugin allows both plugin configurations to apply
+                // simultaneously in the same request
+                prefix = "plugins_on_consumer.";
+            } else {
+                prefix = "plugins.";
+            }
+
+            context.set(prefix + pluginConfig.getName() + ".config", pluginConfig.getConfig());
         });
 
         return null;

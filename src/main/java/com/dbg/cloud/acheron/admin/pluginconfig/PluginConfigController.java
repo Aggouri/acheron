@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
 @Slf4j
 final class PluginConfigController {
 
-    private static final Collection<String> SUPPORTED_PLUGINS = Arrays.asList("oauth2", "api_key", "correlation_id");
+    private static final Collection<String> SUPPORTED_PLUGINS = Arrays.asList("oauth2", "api_key", "correlation_id",
+            "rate_limiting");
     private final PluginConfigStore pluginConfigStore;
 
     @RequestMapping(value = "", method = RequestMethod.GET)

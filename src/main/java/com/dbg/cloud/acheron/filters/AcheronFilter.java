@@ -34,7 +34,6 @@ public abstract class AcheronFilter extends ZuulFilter {
     }
 
 
-
     /**
      * Convenience method for checking that a boolean key is set to Boolean.TRUE in the request context.
      *
@@ -52,6 +51,15 @@ public abstract class AcheronFilter extends ZuulFilter {
      */
     protected String getConsumerId() {
         return (String) RequestContext.getCurrentContext().get(AcheronRequestContextKeys.CONSUMER_ID);
+    }
+
+    /**
+     * Convenience method for obtaining the route id.
+     *
+     * @return the route id
+     */
+    protected String getRouteId() {
+        return (String) RequestContext.getCurrentContext().get(AcheronRequestContextKeys.ROUTE_ID);
     }
 
     /**

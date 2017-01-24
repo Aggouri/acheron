@@ -8,10 +8,12 @@ import com.dbg.cloud.acheron.filters.pre.authentication.ConsumerAPIConfigFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.OAuth2Filter;
 import com.dbg.cloud.acheron.filters.pre.authorization.ACLFilter;
 import com.dbg.cloud.acheron.filters.pre.edge.*;
+import com.dbg.cloud.acheron.filters.pre.traffic.RateLimitingFilter;
 import com.dbg.cloud.acheron.filters.pre.transformation.CorrelationIDFilter;
 import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import com.dbg.cloud.acheron.plugins.oauth2.OAuth2ServerProvider;
 import com.dbg.cloud.acheron.plugins.oauth2.store.OAuth2Store;
+import com.dbg.cloud.acheron.plugins.ratelimiting.RateLimitService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.netflix.zuul.filters.RouteLocator;
 import org.springframework.context.annotation.Bean;
@@ -64,6 +66,11 @@ public class AcheronFilters {
     @Bean
     public ACLFilter aclFilter() {
         return new ACLFilter();
+    }
+
+    @Bean
+    public RateLimitingFilter rateLimitingFilter(RateLimitService rateLimitService) {
+        return new RateLimitingFilter(rateLimitService);
     }
 
     @Bean
