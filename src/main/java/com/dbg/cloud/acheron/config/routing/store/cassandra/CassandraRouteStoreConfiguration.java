@@ -1,7 +1,6 @@
-package com.dbg.cloud.acheron.config.store.routing.cassandra;
+package com.dbg.cloud.acheron.config.routing.store.cassandra;
 
-import com.dbg.cloud.acheron.config.store.routing.RouteStore;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import com.dbg.cloud.acheron.config.routing.store.RouteStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +11,6 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 public class CassandraRouteStoreConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
     public RouteStore cassandraRouteStore(CassandraOperations cassandraOperations) {
         return new CassandraRouteStore(cassandraOperations);
     }

@@ -1,9 +1,9 @@
-package com.dbg.cloud.acheron.config.store.routing.cassandra;
+package com.dbg.cloud.acheron.config.routing.store.cassandra;
 
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import com.dbg.cloud.acheron.config.store.routing.Route;
-import com.dbg.cloud.acheron.config.store.routing.RouteStore;
+import com.dbg.cloud.acheron.config.routing.Route;
+import com.dbg.cloud.acheron.config.routing.store.RouteStore;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;

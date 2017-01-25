@@ -1,7 +1,7 @@
 package com.dbg.cloud.acheron.plugins.apikey.rest;
 
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
-import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.ConsumerService;
 import com.dbg.cloud.acheron.plugins.apikey.store.APIKey;
 import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 final class APIKeyController {
 
     private final APIKeyStore apiKeyStore;
-    private final ConsumerStore consumerStore;
+    private final ConsumerService consumerService;
 
 
     @RequestMapping(value = "/consumers/{consumerId}/api-keys", method = RequestMethod.GET)
@@ -57,7 +57,7 @@ final class APIKeyController {
         }
 
         final UUID uuidConsumerId = parseUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
-        final Consumer consumer = consumerStore.findById(uuidConsumerId).orElseThrow(
+        final Consumer consumer = consumerService.getConsumer(uuidConsumerId).orElseThrow(
                 () -> new ConsumerNotFoundException(consumerId));
 
         return ResponseEntity

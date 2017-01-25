@@ -1,7 +1,9 @@
 package com.dbg.cloud.acheron.admin.pluginconfig;
 
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
+import com.dbg.cloud.acheron.config.common.TechnicalException;
+import com.dbg.cloud.acheron.config.common.ValidationException;
+import com.dbg.cloud.acheron.config.plugins.PluginConfig;
+import com.dbg.cloud.acheron.config.plugins.PluginConfigService;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -18,26 +22,32 @@ import java.util.stream.Collectors;
 @Slf4j
 final class PluginConfigController {
 
-    private static final Collection<String> SUPPORTED_PLUGINS = Arrays.asList("oauth2", "api_key", "correlation_id",
-            "rate_limiting");
-    private final PluginConfigStore pluginConfigStore;
+    private final PluginConfigService pluginConfigService;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<PluginConfigTO> readPlugins() {
-        final List<PluginConfig> pluginConfigList = pluginConfigStore.findAll();
-        return pluginConfigList.stream()
-                .map(pluginConfig -> new PluginConfigTO(pluginConfig))
-                .collect(Collectors.toList());
+        try {
+            final List<PluginConfig> pluginConfigList = pluginConfigService.getAllPluginConfigs();
+            return pluginConfigList.stream()
+                    .map(pluginConfig -> new PluginConfigTO(pluginConfig))
+                    .collect(Collectors.toList());
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "/{pluginConfigId}", method = RequestMethod.GET)
     public ResponseEntity<?> readPlugin(final @PathVariable String pluginConfigId) {
-        final UUID uuidPluginConfigId =
-                parseUUID(pluginConfigId).orElseThrow(() -> new PluginConfigNotFoundException(pluginConfigId));
-        final Optional<PluginConfig> optionalPlugin = pluginConfigStore.findById(uuidPluginConfigId);
+        try {
+            final UUID uuidPluginConfigId =
+                    parseUUID(pluginConfigId).orElseThrow(() -> new PluginConfigNotFoundException(pluginConfigId));
+            final Optional<PluginConfig> optionalPlugin = pluginConfigService.getPluginConfig(uuidPluginConfigId);
 
-        return ResponseEntity.ok(new PluginConfigTO(
-                optionalPlugin.orElseThrow(() -> new PluginConfigNotFoundException(pluginConfigId))));
+            return ResponseEntity.ok(new PluginConfigTO(
+                    optionalPlugin.orElseThrow(() -> new PluginConfigNotFoundException(pluginConfigId))));
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
@@ -47,94 +57,96 @@ final class PluginConfigController {
             return ResponseEntity.badRequest().build();
         }
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(new PluginConfigTO(
-                        pluginConfigStore.add(new PluginConfig.ForCreation(
-                                pluginConfig.getName(),
-                                pluginConfig.getRouteId(),
-                                pluginConfig.getHttpMethods(),
-                                pluginConfig.getConsumerId() != null ?
-                                        UUID.fromString(pluginConfig.getConsumerId()) : null,
-                                pluginConfig.safeGetConfig(),
-                                pluginConfig.getEnabled() != null ? pluginConfig.getEnabled() : true))));
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(new PluginConfigTO(
+                            pluginConfigService.addNewPluginConfig(new PluginConfig.ForCreation(
+                                    pluginConfig.getName(),
+                                    pluginConfig.getRouteId(),
+                                    pluginConfig.getHttpMethods(),
+                                    pluginConfig.getConsumerId() != null ?
+                                            UUID.fromString(pluginConfig.getConsumerId()) : null,
+                                    pluginConfig.safeGetConfig(),
+                                    pluginConfig.getEnabled() != null ? pluginConfig.getEnabled() : true))));
+        } catch (final ValidationException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "/{pluginConfigId}", method = RequestMethod.PATCH)
     public ResponseEntity<?> mergePluginConfig(final @PathVariable String pluginConfigId,
                                                final @JsonView(View.Merge.class) @RequestBody PluginConfigTO
                                                        pluginConfig) {
-        if (!validatePluginConfigForMerge(pluginConfig, pluginConfigId)) {
+        try {
+            // 404 if the plugin config does not exist
+            final UUID uuid =
+                    parseUUID(pluginConfigId).orElseThrow(() -> new PluginConfigNotFoundException(pluginConfigId));
+            pluginConfigService.getPluginConfig(uuid).orElseThrow(
+                    () -> new PluginConfigNotFoundException(pluginConfig.getId()));
+
+            // Validate
+            if (!validatePluginConfigForMerge(pluginConfig, pluginConfigId)) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            return ResponseEntity.ok(
+                    new PluginConfigTO(
+                            pluginConfigService.mergePluginConfig(
+                                    toPluginConfig(pluginConfig))));
+        } catch (final ValidationException e) {
             return ResponseEntity.badRequest().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
         }
-
-        final UUID uuid = parseUUID(pluginConfigId).get(); // safe due to validation above
-        final PluginConfig existingPluginConfig = pluginConfigStore.findById(uuid)
-                .orElseThrow(() -> new PluginConfigNotFoundException(pluginConfig.getId()));
-
-        final PluginConfig mergedPluginConfig = new PluginConfig.WithoutCreatedDate(
-                new PluginConfig.Merge(
-                        existingPluginConfig,
-                        new PluginConfig.Default(
-                                uuid,
-                                pluginConfig.getName(),
-                                pluginConfig.getRouteId(),
-                                pluginConfig.getHttpMethods(),
-                                pluginConfig.getConsumerId() != null ?
-                                        UUID.fromString(pluginConfig.getConsumerId()) : null,
-                                pluginConfig.safeGetConfig(),
-                                pluginConfig.getEnabled() != null ?
-                                        pluginConfig.getEnabled() : true,
-                                pluginConfig.getCreatedAt()
-                        )));
-
-        // no validation on coherence; perhaps we should do it
-        return ResponseEntity.ok(new PluginConfigTO(pluginConfigStore.update(mergedPluginConfig)));
     }
 
     @RequestMapping(value = "/{pluginConfigId}", method = RequestMethod.PUT)
     public ResponseEntity<?> replacePluginConfig(final @PathVariable String pluginConfigId,
                                                  final @JsonView(View.Replace.class) @RequestBody PluginConfigTO
                                                          pluginConfig) {
-        if (!validatePluginConfigForReplace(pluginConfig, pluginConfigId)) {
+        try {
+            // 404 if the plugin config does not exist
+            final UUID uuid = parseUUID(pluginConfigId).get();
+            pluginConfigService.getPluginConfig(uuid).orElseThrow(
+                    () -> new PluginConfigNotFoundException(pluginConfig.getId()));
+
+            // Validate
+            if (!validatePluginConfigForReplace(pluginConfig, pluginConfigId)) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            return ResponseEntity.ok(
+                    new PluginConfigTO(
+                            pluginConfigService.replacePluginConfig(
+                                    toPluginConfig(pluginConfig))));
+        } catch (final ValidationException e) {
             return ResponseEntity.badRequest().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
         }
-
-        final UUID uuid = parseUUID(pluginConfigId).get(); // safe due to validation above
-        pluginConfigStore.findById(uuid)
-                .orElseThrow(() -> new PluginConfigNotFoundException(pluginConfig.getId()));
-
-        return ResponseEntity
-                .ok(new PluginConfigTO(
-                        pluginConfigStore.update(
-                                new PluginConfig.WithoutCreatedDate(
-                                        new PluginConfig.Default(
-                                                uuid,
-                                                pluginConfig.getName(),
-                                                pluginConfig.getRouteId(),
-                                                pluginConfig.getHttpMethods(),
-                                                pluginConfig.getConsumerId() != null ?
-                                                        UUID.fromString(pluginConfig.getConsumerId()) : null,
-                                                pluginConfig.safeGetConfig(),
-                                                pluginConfig.getEnabled() != null ? pluginConfig.getEnabled() : true,
-                                                pluginConfig.getCreatedAt()
-                                        )))));
     }
 
     @RequestMapping(value = "/{pluginConfigId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteConsumer(final @PathVariable String pluginConfigId) {
-        final UUID uuidPluginConfigId =
-                parseUUID(pluginConfigId).orElseThrow(() -> new PluginConfigNotFoundException(pluginConfigId));
-        pluginConfigStore.deleteById(uuidPluginConfigId);
+        try {
+            // 404 if the plugin config does not exist
+            final UUID uuidPluginConfigId =
+                    parseUUID(pluginConfigId).orElseThrow(() -> new PluginConfigNotFoundException(pluginConfigId));
 
-        return ResponseEntity.noContent().build();
+            pluginConfigService.deletePluginConfig(uuidPluginConfigId);
+
+            return ResponseEntity.noContent().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     private boolean validatePluginConfigForCreate(final PluginConfigTO pluginConfig) {
-        return SUPPORTED_PLUGINS.contains(pluginConfig.getName()) &&
-                pluginConfig.getRouteId() != null && !pluginConfig.getRouteId().isEmpty() &&
-                // consumer id is either null or a UUID
-                (pluginConfig.getConsumerId() == null || parseUUID(pluginConfig.getConsumerId()).isPresent());
+        // consumer id is either null or a UUID
+        return pluginConfig.getConsumerId() == null || parseUUID(pluginConfig.getConsumerId()).isPresent();
     }
 
     private boolean validatePluginConfigForReplace(final PluginConfigTO pluginConfig, final String id) {
@@ -147,12 +159,9 @@ final class PluginConfigController {
 
     private boolean validatePluginConfigForMerge(final PluginConfigTO pluginConfig, final String id) {
         return parseUUID(id).isPresent() && // id is a UUID (and not null)
-                // if present, plugin name is supported
-                (pluginConfig.getName() == null || pluginConfig.getName().isEmpty() ||
-                        SUPPORTED_PLUGINS.contains(pluginConfig.getName())) &&
                 // object id is either not present OR equal to id
                 (pluginConfig.getId() == null || id.equals(pluginConfig.getId())) &&
-                // if consumer if is present, it's a UUID
+                // if consumer id is present, it's a UUID
                 (pluginConfig.getConsumerId() == null || parseUUID(pluginConfig.getConsumerId()).isPresent());
     }
 
@@ -166,10 +175,28 @@ final class PluginConfigController {
         return Optional.ofNullable(uuid);
     }
 
+    private PluginConfig toPluginConfig(final PluginConfigTO pluginConfigTO) {
+        return new PluginConfig.Default(
+                UUID.fromString(pluginConfigTO.getId()),
+                pluginConfigTO.getName(),
+                pluginConfigTO.getRouteId(),
+                pluginConfigTO.getHttpMethods(),
+                pluginConfigTO.getConsumerId() != null ? // being null is a legitimate case
+                        UUID.fromString(pluginConfigTO.getConsumerId()) : null,
+                pluginConfigTO.safeGetConfig(),
+                pluginConfigTO.getEnabled() != null ? pluginConfigTO.getEnabled() : true,
+                pluginConfigTO.getCreatedAt()
+        );
+    }
+
     @ResponseStatus(HttpStatus.NOT_FOUND)
     class PluginConfigNotFoundException extends RuntimeException {
         public PluginConfigNotFoundException(final String pluginConfig) {
             super("Could not find plugin config '" + pluginConfig + "'");
         }
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    class InternalServerError extends RuntimeException {
     }
 }

@@ -1,5 +1,6 @@
-package com.dbg.cloud.acheron.config.store.plugins;
+package com.dbg.cloud.acheron.config.plugins.store;
 
+import com.dbg.cloud.acheron.config.plugins.PluginConfig;
 import lombok.NonNull;
 
 import java.util.List;

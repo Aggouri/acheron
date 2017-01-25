@@ -1,8 +1,8 @@
 package com.dbg.cloud.acheron;
 
 import com.dbg.cloud.acheron.config.oauth2.OAuth2Properties;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
-import com.dbg.cloud.acheron.config.store.routing.RouteStore;
+import com.dbg.cloud.acheron.config.plugins.PluginConfigService;
+import com.dbg.cloud.acheron.config.routing.RouteService;
 import com.dbg.cloud.acheron.filters.pre.authentication.APIKeyFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.ConsumerAPIConfigFilter;
 import com.dbg.cloud.acheron.filters.pre.authentication.OAuth2Filter;
@@ -39,13 +39,13 @@ public class AcheronFilters {
     }
 
     @Bean
-    public HttpMethodFilter httpMethodFilter(RouteStore routeStore) {
-        return new HttpMethodFilter(routeStore);
+    public HttpMethodFilter httpMethodFilter(RouteService routeService) {
+        return new HttpMethodFilter(routeService);
     }
 
     @Bean
-    public APIConfigFilter apiConfigFilter(PluginConfigStore pluginConfigStore) {
-        return new APIConfigFilter(pluginConfigStore);
+    public APIConfigFilter apiConfigFilter(PluginConfigService pluginConfigService) {
+        return new APIConfigFilter(pluginConfigService);
     }
 
     @Bean
@@ -59,8 +59,8 @@ public class AcheronFilters {
     }
 
     @Bean
-    public ConsumerAPIConfigFilter consumerAPIConfigFilter(PluginConfigStore pluginConfigStore) {
-        return new ConsumerAPIConfigFilter(pluginConfigStore);
+    public ConsumerAPIConfigFilter consumerAPIConfigFilter(PluginConfigService pluginConfigService) {
+        return new ConsumerAPIConfigFilter(pluginConfigService);
     }
 
     @Bean

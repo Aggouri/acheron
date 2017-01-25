@@ -1,10 +1,10 @@
-package com.dbg.cloud.acheron.config.store.consumers.cassandra;
+package com.dbg.cloud.acheron.config.consumers.store.cassandra;
 
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
-import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.store.ConsumerStore;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.springframework.data.cassandra.core.CassandraOperations;

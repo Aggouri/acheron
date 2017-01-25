@@ -1,8 +1,8 @@
 package com.dbg.cloud.acheron.filters.pre.edge;
 
 import com.dbg.cloud.acheron.AcheronRequestContextKeys;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
+import com.dbg.cloud.acheron.config.plugins.PluginConfig;
+import com.dbg.cloud.acheron.config.plugins.PluginConfigService;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public final class APIConfigFilter extends PreFilter {
 
-    private final PluginConfigStore configStore;
+    private final PluginConfigService configService;
 
     @Override
     public int filterOrder() {
@@ -32,7 +32,7 @@ public final class APIConfigFilter extends PreFilter {
         // TODO Come up with multi-realm concept
         context.set(AcheronRequestContextKeys.REALM_ID, "realm1");
 
-        final Collection<PluginConfig> routeConfigurations = configStore.findByRoute(routeId);
+        final Collection<PluginConfig> routeConfigurations = configService.getPluginConfigsOfRoute(routeId);
         final Collection<PluginConfig> enabledPlugins = routeConfigurations.stream().filter(
                 pluginConfig -> (shouldPluginConfigBeIncluded(pluginConfig, httpMethod)))
                 .collect(Collectors.toList());

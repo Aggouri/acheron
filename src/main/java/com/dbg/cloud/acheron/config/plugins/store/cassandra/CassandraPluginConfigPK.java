@@ -1,4 +1,4 @@
-package com.dbg.cloud.acheron.config.store.plugins.cassandra;
+package com.dbg.cloud.acheron.config.plugins.store.cassandra;
 
 import lombok.*;
 import org.springframework.cassandra.core.Ordering;

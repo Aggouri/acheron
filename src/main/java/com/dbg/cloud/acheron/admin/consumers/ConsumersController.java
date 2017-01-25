@@ -1,11 +1,9 @@
 package com.dbg.cloud.acheron.admin.consumers;
 
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
-import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
-import com.dbg.cloud.acheron.plugins.apikey.store.APIKey;
-import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
+import com.dbg.cloud.acheron.config.common.TechnicalException;
+import com.dbg.cloud.acheron.config.common.ValidationException;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.ConsumerService;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,59 +22,56 @@ import java.util.stream.Collectors;
 @Slf4j
 final class ConsumersController {
 
-    private final ConsumerStore consumerStore;
-    private final PluginConfigStore pluginConfigStore;
-    private final APIKeyStore apiKeyStore;
+    private final ConsumerService consumerService;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<ConsumerTO> readConsumers() {
-        final List<Consumer> consumerList = consumerStore.findAll();
-        return consumerList.stream().map(consumer -> new ConsumerTO(consumer)).collect(Collectors.toList());
+        try {
+            final List<Consumer> consumerList = consumerService.getAllConsumers();
+            return consumerList.stream().map(consumer -> new ConsumerTO(consumer)).collect(Collectors.toList());
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "/{consumerId}", method = RequestMethod.GET)
     public ResponseEntity<?> readConsumer(final @PathVariable String consumerId) {
-        final UUID uuidConsumerId =
-                parseConsumerUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
-        final Optional<Consumer> optionalConsumer = consumerStore.findById(uuidConsumerId);
+        try {
+            final UUID uuidConsumerId =
+                    parseConsumerUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
+            final Optional<Consumer> optionalConsumer = consumerService.getConsumer(uuidConsumerId);
 
-        return ResponseEntity.ok(new ConsumerTO(
-                optionalConsumer.orElseThrow(() -> new ConsumerNotFoundException(consumerId))));
+            return ResponseEntity.ok(new ConsumerTO(
+                    optionalConsumer.orElseThrow(() -> new ConsumerNotFoundException(consumerId))));
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
     public ResponseEntity<?> addConsumer(final @JsonView(View.Create.class) @RequestBody ConsumerTO consumer) {
-        // We only deserialize 'name'
-        if (!validateConsumer(consumer)) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(consumerService.addNewConsumer(new Consumer.ForCreation(consumer.getName())));
+        } catch (final ValidationException e) {
             return ResponseEntity.badRequest().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
         }
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(consumerStore.add(new Consumer.ForCreation(consumer.getName())));
     }
 
     @RequestMapping(value = "/{consumerId}", method = RequestMethod.DELETE)
     public ResponseEntity<?> deleteConsumer(final @PathVariable String consumerId) {
-        final UUID uuidConsumerId =
-                parseConsumerUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
-        consumerStore.deleteById(uuidConsumerId);
+        try {
+            final UUID uuidConsumerId =
+                    parseConsumerUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
+            consumerService.deleteConsumer(uuidConsumerId);
 
-        // Delete all plugin configs linked to the consumer
-        final List<PluginConfig> consumerPluginConfigs = pluginConfigStore.findByConsumer(uuidConsumerId);
-        consumerPluginConfigs.forEach(
-                consumerPluginConfig -> pluginConfigStore.deleteById(consumerPluginConfig.getId()));
-
-        // Delete API Keys
-        final List<APIKey> consumerAPIKeys = apiKeyStore.findByConsumer(uuidConsumerId);
-        consumerAPIKeys.forEach(
-                consumerAPIKey -> apiKeyStore.deleteById(consumerAPIKey.getId()));
-
-        return ResponseEntity.noContent().build();
-    }
-
-    private boolean validateConsumer(final ConsumerTO consumer) {
-        return consumer.getName() != null;
+            return ResponseEntity.noContent().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     private Optional<UUID> parseConsumerUUID(final String consumerId) {
@@ -94,5 +89,9 @@ final class ConsumersController {
         public ConsumerNotFoundException(final String consumerId) {
             super("Could not find consumer '" + consumerId + "'");
         }
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    class InternalServerError extends RuntimeException {
     }
 }

@@ -1,7 +1,7 @@
 package com.dbg.cloud.acheron.plugins.oauth2.rest;
 
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
-import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.ConsumerService;
 import com.dbg.cloud.acheron.plugins.oauth2.OAuth2ServerProvider;
 import com.dbg.cloud.acheron.plugins.oauth2.authserver.base.OAuth2AuthorisationServer;
 import com.dbg.cloud.acheron.plugins.oauth2.authserver.base.management.client.creation.ClientCreationOperation;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 final class OAuth2ClientController {
 
     private final OAuth2Store oAuth2Store;
-    private final ConsumerStore consumerStore;
+    private final ConsumerService consumerService;
     private final OAuth2ServerProvider oAuth2ServerProvider;
 
     @RequestMapping(value = "/consumers/{consumerId}/oauth2-clients", method = RequestMethod.GET)
@@ -65,7 +65,7 @@ final class OAuth2ClientController {
         }
 
         final UUID uuidConsumerId = parseUUID(consumerId).orElseThrow(() -> new ConsumerNotFoundException(consumerId));
-        final Consumer consumer = consumerStore.findById(uuidConsumerId).orElseThrow(
+        final Consumer consumer = consumerService.getConsumer(uuidConsumerId).orElseThrow(
                 () -> new ConsumerNotFoundException(consumerId));
 
         // Create in Authorisation Server

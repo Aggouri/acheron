@@ -1,9 +1,9 @@
 package com.dbg.cloud.acheron.admin.routes;
 
-import com.dbg.cloud.acheron.cluster.ClusterEventBus;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
-import com.dbg.cloud.acheron.config.store.routing.Route;
-import com.dbg.cloud.acheron.config.store.routing.RouteStore;
+import com.dbg.cloud.acheron.config.common.TechnicalException;
+import com.dbg.cloud.acheron.config.common.ValidationException;
+import com.dbg.cloud.acheron.config.routing.Route;
+import com.dbg.cloud.acheron.config.routing.RouteService;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,14 +21,16 @@ import java.util.stream.Collectors;
 @Slf4j
 final class RoutesController {
 
-    private final RouteStore routeStore;
-    private final PluginConfigStore pluginConfigStore;
-    private final ClusterEventBus bus;
+    private final RouteService routeService;
 
     @RequestMapping(value = "", method = RequestMethod.GET)
     public List<RouteTO> readRoutes() {
-        final List<Route> routeList = routeStore.findAll();
-        return routeList.stream().map(route -> new RouteTO(route)).collect(Collectors.toList());
+        try {
+            final List<Route> routeList = routeService.getAllRoutes();
+            return routeList.stream().map(route -> new RouteTO(route)).collect(Collectors.toList());
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "/{routeId}", method = RequestMethod.GET)
@@ -37,8 +39,12 @@ final class RoutesController {
             throw new RouteNotFoundException(routeId);
         }
 
-        final Optional<Route> optionalRoute = routeStore.findById(routeId);
-        return ResponseEntity.ok(new RouteTO(optionalRoute.orElseThrow(() -> new RouteNotFoundException(routeId))));
+        try {
+            final Optional<Route> optionalRoute = routeService.getRoute(routeId);
+            return ResponseEntity.ok(new RouteTO(optionalRoute.orElseThrow(() -> new RouteNotFoundException(routeId))));
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "", method = RequestMethod.POST)
@@ -47,22 +53,24 @@ final class RoutesController {
             return ResponseEntity.badRequest().build();
         }
 
-        final Route addedRoute = routeStore.add(new Route.ForCreation(
-                route.getId(),
-                route.getHttpMethods(),
-                route.getPath(),
-                route.getServiceId(),
-                route.getUrl(),
-                route.isKeepPrefix(),
-                route.isRetryable(),
-                route.isOverrideSensitiveHeaders(),
-                route.getSensitiveHeaders()));
-
-        refreshRoutes();
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(addedRoute);
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(routeService.addNewRoute(new Route.ForCreation(
+                            route.getId(),
+                            route.getHttpMethods(),
+                            route.getPath(),
+                            route.getServiceId(),
+                            route.getUrl(),
+                            route.isKeepPrefix(),
+                            route.isRetryable(),
+                            route.isOverrideSensitiveHeaders(),
+                            route.getSensitiveHeaders())));
+        } catch (final ValidationException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     @RequestMapping(value = "/{routeId}", method = RequestMethod.DELETE)
@@ -70,27 +78,18 @@ final class RoutesController {
         if (routeId == null) {
             throw new RouteNotFoundException(routeId);
         }
-        routeStore.deleteById(routeId);
 
-        refreshRoutes();
+        try {
+            routeService.deleteRoute(routeId);
 
-        // FIXME: This is not sustainable. Come up with an event-based model (event bus, publish/subscribe, whatever)
-        pluginConfigStore.findByRoute(routeId).stream().forEach(
-                pluginConfig -> pluginConfigStore.deleteById(pluginConfig.getId()));
-
-        return ResponseEntity.noContent().build();
+            return ResponseEntity.noContent().build();
+        } catch (final TechnicalException e) {
+            throw new InternalServerError();
+        }
     }
 
     private boolean validateRoute(final RouteTO route) {
-        return route.getId() != null && !route.getId().isEmpty() &&
-                // either service id or url must be given
-                ((route.getServiceId() != null && !route.getServiceId().isEmpty()) ||
-                        (route.getUrl() != null && !route.getUrl().isEmpty())) &&
-                route.getPath() != null && !route.getPath().isEmpty();
-    }
-
-    private void refreshRoutes() {
-        bus.refreshRoutes();
+        return true;
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -98,5 +97,9 @@ final class RoutesController {
         public RouteNotFoundException(final String routeId) {
             super("Could not find route '" + routeId + "'");
         }
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    class InternalServerError extends RuntimeException {
     }
 }

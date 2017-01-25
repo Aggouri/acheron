@@ -1,4 +1,4 @@
-package com.dbg.cloud.acheron.config.store.consumers;
+package com.dbg.cloud.acheron.config.consumers;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

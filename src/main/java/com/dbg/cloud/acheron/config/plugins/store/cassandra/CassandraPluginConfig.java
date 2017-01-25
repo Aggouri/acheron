@@ -1,6 +1,6 @@
-package com.dbg.cloud.acheron.config.store.plugins.cassandra;
+package com.dbg.cloud.acheron.config.plugins.store.cassandra;
 
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
+import com.dbg.cloud.acheron.config.plugins.PluginConfig;
 import lombok.*;
 import org.springframework.data.cassandra.mapping.Column;
 import org.springframework.data.cassandra.mapping.PrimaryKey;

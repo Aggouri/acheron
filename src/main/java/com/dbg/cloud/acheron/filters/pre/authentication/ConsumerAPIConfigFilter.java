@@ -1,8 +1,8 @@
 package com.dbg.cloud.acheron.filters.pre.authentication;
 
 import com.dbg.cloud.acheron.AcheronRequestContextKeys;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
+import com.dbg.cloud.acheron.config.plugins.PluginConfig;
+import com.dbg.cloud.acheron.config.plugins.PluginConfigService;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
@@ -22,7 +22,7 @@ public class ConsumerAPIConfigFilter extends PreFilter {
     // in the context of the same request.
     private final static Collection<String> PLUGINS_SUPPORTING_SIMULTANEOUS_CONFIGS = Arrays.asList("rate_limiting");
 
-    private final PluginConfigStore configStore;
+    private final PluginConfigService configService;
 
     @Override
     public int filterOrder() {
@@ -38,7 +38,7 @@ public class ConsumerAPIConfigFilter extends PreFilter {
         final String httpMethod = context.getRequest().getMethod();
 
         // Get configuration for consumer (this route-specific or generic)
-        List<PluginConfig> routeConfigurations = configStore.findByConsumer(UUID.fromString(consumerId));
+        List<PluginConfig> routeConfigurations = configService.getPluginConfigsOfConsumer(UUID.fromString(consumerId));
         List<PluginConfig> enabledPlugins = routeConfigurations.stream().filter(
                 pluginConfig -> (shouldPluginConfigBeIncluded(pluginConfig, routeId, httpMethod)))
                 .collect(Collectors.toList());

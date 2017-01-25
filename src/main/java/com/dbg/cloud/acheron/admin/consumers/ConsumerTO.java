@@ -1,6 +1,6 @@
 package com.dbg.cloud.acheron.admin.consumers;
 
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;

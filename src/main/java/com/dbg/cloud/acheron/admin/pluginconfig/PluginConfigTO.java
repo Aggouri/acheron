@@ -1,6 +1,7 @@
 package com.dbg.cloud.acheron.admin.pluginconfig;
 
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfig;
+import com.dbg.cloud.acheron.config.plugins.PluginConfig;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -57,6 +58,7 @@ final class PluginConfigTO {
     @JsonProperty("created_at")
     private final Date createdAt;
 
+    @JsonIgnore
     public String safeGetConfig() {
         return this.config != null ? this.config.jsonValue() : null;
     }

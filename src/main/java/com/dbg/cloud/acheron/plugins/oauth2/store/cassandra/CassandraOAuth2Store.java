@@ -3,7 +3,7 @@ package com.dbg.cloud.acheron.plugins.oauth2.store.cassandra;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
 import com.dbg.cloud.acheron.plugins.oauth2.store.OAuth2Client;
 import com.dbg.cloud.acheron.plugins.oauth2.store.OAuth2Store;
 import lombok.AllArgsConstructor;

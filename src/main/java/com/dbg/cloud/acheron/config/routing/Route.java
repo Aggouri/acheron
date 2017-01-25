@@ -1,4 +1,4 @@
-package com.dbg.cloud.acheron.config.store.routing;
+package com.dbg.cloud.acheron.config.routing;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

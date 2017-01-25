@@ -1,6 +1,6 @@
-package com.dbg.cloud.acheron.config.store.consumers.cassandra;
+package com.dbg.cloud.acheron.config.consumers.store.cassandra;
 
-import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
+import com.dbg.cloud.acheron.config.consumers.store.ConsumerStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

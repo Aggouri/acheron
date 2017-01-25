@@ -1,5 +1,6 @@
-package com.dbg.cloud.acheron.config.store.consumers;
+package com.dbg.cloud.acheron.config.consumers.store;
 
+import com.dbg.cloud.acheron.config.consumers.Consumer;
 import lombok.NonNull;
 
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.dbg.cloud.acheron.filters.pre.authentication;
 
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import com.netflix.zuul.context.RequestContext;

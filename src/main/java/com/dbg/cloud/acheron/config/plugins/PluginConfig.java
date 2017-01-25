@@ -1,4 +1,4 @@
-package com.dbg.cloud.acheron.config.store.plugins;
+package com.dbg.cloud.acheron.config.plugins;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

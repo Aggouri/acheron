@@ -1,10 +1,11 @@
 package com.dbg.cloud.acheron;
 
-import com.dbg.cloud.acheron.config.store.consumers.ConsumerStore;
-import com.dbg.cloud.acheron.config.store.plugins.PluginConfigStore;
-import com.dbg.cloud.acheron.config.store.routing.RouteStore;
+import com.dbg.cloud.acheron.config.consumers.store.ConsumerStore;
+import com.dbg.cloud.acheron.config.plugins.store.PluginConfigStore;
+import com.dbg.cloud.acheron.config.routing.store.RouteStore;
 import com.dbg.cloud.acheron.plugins.apikey.store.APIKeyStore;
 import com.dbg.cloud.acheron.plugins.oauth2.store.OAuth2Store;
+import com.dbg.cloud.acheron.plugins.ratelimiting.store.RateLimitStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +35,9 @@ public class AcheronApplicationTests {
 
     @MockBean
     private OAuth2Store oAuth2Store;
+
+    @MockBean
+    private RateLimitStore rateLimitStore;
 
 
     @Test

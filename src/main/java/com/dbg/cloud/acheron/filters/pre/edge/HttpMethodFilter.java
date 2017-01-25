@@ -1,7 +1,7 @@
 package com.dbg.cloud.acheron.filters.pre.edge;
 
 import com.dbg.cloud.acheron.AcheronRequestContextKeys;
-import com.dbg.cloud.acheron.config.store.routing.RouteStore;
+import com.dbg.cloud.acheron.config.routing.RouteService;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.Set;
 @Slf4j
 public class HttpMethodFilter extends PreFilter {
 
-    private final RouteStore routeStore;
+    private final RouteService routeService;
 
     @Override
     public int filterOrder() {
@@ -49,6 +49,6 @@ public class HttpMethodFilter extends PreFilter {
     }
 
     private Set<String> retrieveAllowedMethodsOnRoute(final String routeId) {
-        return routeStore.findHttpMethodsByRouteId(routeId);
+        return routeService.getHttpMethodsOfRoute(routeId);
     }
 }

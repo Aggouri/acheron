@@ -2,7 +2,7 @@ package com.dbg.cloud.acheron.filters.pre.authentication;
 
 import com.dbg.cloud.acheron.AcheronHeaders;
 import com.dbg.cloud.acheron.AcheronRequestContextKeys;
-import com.dbg.cloud.acheron.config.store.consumers.Consumer;
+import com.dbg.cloud.acheron.config.consumers.Consumer;
 import com.dbg.cloud.acheron.filters.pre.PreFilter;
 import com.dbg.cloud.acheron.plugins.oauth2.OAuth2ServerProvider;
 import com.dbg.cloud.acheron.plugins.oauth2.authserver.base.AccessToken;

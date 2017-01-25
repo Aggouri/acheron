@@ -1,5 +1,6 @@
-package com.dbg.cloud.acheron.config.store.routing;
+package com.dbg.cloud.acheron.config.routing.store;
 
+import com.dbg.cloud.acheron.config.routing.RouteService;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.netflix.zuul.filters.ZuulProperties;
 import org.springframework.cloud.netflix.zuul.filters.discovery.DiscoveryClientRouteLocator;
@@ -12,9 +13,10 @@ public class AcheronDiscoveryClientRouteLocator extends DiscoveryClientRouteLoca
     private final AcheronSimpleRouteLocator simpleLocator;
 
     public AcheronDiscoveryClientRouteLocator(final String servletPath, final DiscoveryClient discovery,
-                                              final ZuulProperties properties, final Optional<RouteStore> routeStore) {
+                                              final ZuulProperties properties,
+                                              final RouteService routeService) {
         super(servletPath, discovery, properties);
-        simpleLocator = new AcheronSimpleRouteLocator(servletPath, properties, routeStore);
+        simpleLocator = new AcheronSimpleRouteLocator(servletPath, properties, routeService);
     }
 
     @Override

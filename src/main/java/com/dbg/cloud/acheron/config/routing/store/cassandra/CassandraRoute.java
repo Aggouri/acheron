@@ -1,6 +1,6 @@
-package com.dbg.cloud.acheron.config.store.routing.cassandra;
+package com.dbg.cloud.acheron.config.routing.store.cassandra;
 
-import com.dbg.cloud.acheron.config.store.routing.Route;
+import com.dbg.cloud.acheron.config.routing.Route;
 import lombok.*;
 import org.springframework.data.cassandra.mapping.Column;
 import org.springframework.data.cassandra.mapping.PrimaryKey;

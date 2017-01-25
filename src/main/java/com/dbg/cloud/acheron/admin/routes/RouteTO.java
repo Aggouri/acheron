@@ -1,6 +1,6 @@
 package com.dbg.cloud.acheron.admin.routes;
 
-import com.dbg.cloud.acheron.config.store.routing.Route;
+import com.dbg.cloud.acheron.config.routing.Route;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
