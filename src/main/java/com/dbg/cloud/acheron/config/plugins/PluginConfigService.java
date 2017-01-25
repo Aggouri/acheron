@@ -164,8 +164,12 @@ public interface PluginConfigService {
                 throw new ValidationException("route id cannot be empty");
             }
 
-            routeService.getRoute(pluginConfig.getRouteId()).orElseThrow(
-                    () -> new ValidationException("route not found"));
+            try {
+                routeService.getRoute(pluginConfig.getRouteId()).orElseThrow(
+                        () -> new ValidationException("route not found"));
+            } catch (final RuntimeException e) {
+                throw new TechnicalException(e);
+            }
         }
 
         private void validatePluginConfigForReplace(final PluginConfig pluginConfig) throws ValidationException {
@@ -176,7 +180,8 @@ public interface PluginConfigService {
             validatePluginConfigForCreate(pluginConfig);
         }
 
-        private void validatePluginConfigForMerge(final PluginConfig pluginConfig) throws ValidationException {
+        private void validatePluginConfigForMerge(final PluginConfig pluginConfig) throws ValidationException,
+                TechnicalException {
             if (pluginConfig.getId() == null) {
                 throw new ValidationException("plugin id cannot be null");
             }
@@ -192,8 +197,12 @@ public interface PluginConfigService {
                     throw new ValidationException("route id cannot be set to an empty value");
                 }
 
-                routeService.getRoute(pluginConfig.getRouteId()).orElseThrow(
-                        () -> new ValidationException("route not found"));
+                try {
+                    routeService.getRoute(pluginConfig.getRouteId()).orElseThrow(
+                            () -> new ValidationException("route not found"));
+                } catch (final RuntimeException e) {
+                    throw new TechnicalException(e);
+                }
             }
         }
     }
