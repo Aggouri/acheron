@@ -42,7 +42,7 @@ $ ./mvnw package docker:build -DskipTests
 $ docker-compose up --build
 ```
 
-Acheron runs on [http://localhost:8080](http://localhost:8080). Skip to section *Play* for a short tutorial.
+Acheron runs on [http://localhost:8080](http://localhost:8080) for API requests and [http://localhost:9090](http://localhost:9090) for configuration requests. Skip to section *Play* for a short tutorial.
 
 # 4. Building Acheron
 To build Acheron, you can run the following command:
@@ -59,7 +59,7 @@ $ ./mvnw package docker:build
 Check the [docs](https://github.com/Aggouri/acheron/wiki/Manual-setup).
 
 # 6. Play
-This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and you have an API running at ```http://localhost:10000/accounts```. 
+This section is a short tutorial allowing you to play with Acheron. It assumes Acheron runs on ```http://localhost:8080``` and ```http://localhost:9090``` and you have an API running at ```http://localhost:10000/accounts```. 
 
 > Note that if you are using Docker, replace the API URL's ```localhost``` with your machine's IP address. Acheron running in the container can access your API running locally **only through the machine's IP address**. In other words, in the following set of instructions, whenever you see ```http://localhost:10000```, please read ```http://<machine_ip>:10000```.
 
@@ -86,7 +86,7 @@ $ curl -i -X POST -H "Content-Type: application/json" -d '{
     "retryable": false,
     "override_sensitive_headers": false,
     "sensitive_headers": []
-}' "http://localhost:8080/admin/routes"
+}' "http://localhost:9090/admin/routes"
 ```
 
 ### Configure OAuth2 and API Key auth on the route
@@ -99,7 +99,7 @@ $ curl -i -X POST -H "Content-Type: application/json" -d '{
 "http_methods": [
   "*"
  ]
-}' "http://localhost:8080/admin/plugin-configs"
+}' "http://localhost:9090/admin/plugin-configs"
 
 $ curl -i -X POST -H "Content-Type: application/json" -d '{
 "name": "oauth2",
@@ -107,7 +107,7 @@ $ curl -i -X POST -H "Content-Type: application/json" -d '{
 "http_methods": [
   "*"
  ]
-}' "http://localhost:8080/admin/plugin-configs"
+}' "http://localhost:9090/admin/plugin-configs"
 ```
 
 ### Create a consumer for our API
@@ -116,7 +116,7 @@ Execute the following request on the ```/admin/consumers``` endpoint. This creat
 ```
 $ curl -i -X POST -H "Content-Type: application/json" -d '{
 	"name": "Awesome Consumer"
-}' "http://localhost:8080/admin/consumers"
+}' "http://localhost:9090/admin/consumers"
 ```
 Take a note of the returned Consumer ID (```id``` column of the returned JSON). You will use it to map the OAuth2 credentials to the consumer.
 
@@ -126,7 +126,7 @@ To make calls with an API key, a consumer needs to have one. Replace ```<consume
 ```
 $ curl -i -X POST -H "Content-Type: application/json" -d '{
 	"api_key": "faed995a-c797-479f-9352-a7b2bf1748ad"
-}' "http://localhost:8080/admin/consumers/<consumer_id>/api-keys"
+}' "http://localhost:9090/admin/consumers/<consumer_id>/api-keys"
 ```
 
 > Here we are forcing the API Key to be a specific string. Normally, you would let Acheron generate one for you.
@@ -139,7 +139,7 @@ Replace ```<consumer_id>``` with the consumer ID returned in the consumer creati
 $ curl -i -X POST -H "Content-Type: application/json" -d '{
 	"scope": "accounts",
 	"grant_types": ["client_credentials", "authorization_code"]
-}' "http://localhost:8080/admin/consumers/<consumer_id>/oauth2-clients"
+}' "http://localhost:9090/admin/consumers/<consumer_id>/oauth2-clients"
 ```
 
 Take a note of the returned client ID and client secret. They are used in the next section.

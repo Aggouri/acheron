@@ -4,8 +4,18 @@ ribbon:
   eureka:
     enabled: false
 
+# Env var is SERVER_PORT
 server:
   port: 8080
+
+# Env var is ADMIN_PORT
+admin:
+  port: 9090
+  context-path: /
+
+management:
+  port: 8081
+  context-path: /monitoring
 
 store:
   cassandra:
