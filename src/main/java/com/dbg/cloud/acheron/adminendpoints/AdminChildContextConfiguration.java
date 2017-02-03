@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.web.DefaultErrorAttributes;
 import org.springframework.boot.autoconfigure.web.DispatcherServletAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.ErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -24,16 +25,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Configuration
 @EnableWebMvc
@@ -90,6 +90,34 @@ public class AdminChildContextConfiguration {
     @Bean(name = DispatcherServlet.HANDLER_EXCEPTION_RESOLVER_BEAN_NAME)
     public CompositeHandlerExceptionResolver compositeHandlerExceptionResolver() {
         return new CompositeHandlerExceptionResolver();
+    }
+
+    @Bean
+    public DefaultErrorAttributes errorAttributes() {
+        final Collection<String> allowedErrorAttributes = Arrays.asList(
+                "timestamp",
+                "status",
+                "error",
+                "message",
+                "path"
+        );
+
+        return new DefaultErrorAttributes() {
+            @Override
+            public Map<String, Object> getErrorAttributes(
+                    RequestAttributes requestAttributes, boolean includeStackTrace) {
+                Map<String, Object> errorAttributes = super.getErrorAttributes(requestAttributes, includeStackTrace);
+
+                errorAttributes.entrySet().removeIf(mapEntry -> !allowedErrorAttributes.contains(mapEntry.getKey()));
+
+                return errorAttributes;
+            }
+        };
+    }
+
+    @Bean
+    public ResponseStatusExceptionResolver responseStatusExceptionResolver() {
+        return new ResponseStatusExceptionResolver();
     }
 
     static class ServerCustomization implements EmbeddedServletContainerCustomizer, Ordered {
